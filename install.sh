@@ -81,8 +81,8 @@ fi
 # Create installation directory
 INSTALL_DIR="/opt/fireisp"
 echo "Creating installation directory at $INSTALL_DIR..."
-mkdir -p $INSTALL_DIR
-cd $INSTALL_DIR
+mkdir -p "$INSTALL_DIR"
+cd "$INSTALL_DIR"
 
 # Clone or copy FireISP repository
 echo "Setting up FireISP application..."
@@ -92,9 +92,14 @@ if [ -d "$INSTALL_DIR/.git" ]; then
 else
     # Check if script is being run from a valid FireISP directory
     if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
-        echo "Copying files from $SCRIPT_DIR..."
-        # Copy all files (visible and hidden), excluding ., .., and .git
-        find "$SCRIPT_DIR" -maxdepth 1 ! -name "." ! -name ".." ! -name ".git" -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
+        # Ensure we're not trying to copy a directory to itself
+        if [ "$SCRIPT_DIR" = "$INSTALL_DIR" ]; then
+            echo "Already running from installation directory, skipping file copy..."
+        else
+            echo "Copying files from $SCRIPT_DIR..."
+            # Copy all files (visible and hidden), excluding ., .., and .git
+            find "$SCRIPT_DIR" -maxdepth 1 ! -name "." ! -name ".." ! -name ".git" -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
+        fi
     elif [ -f "/tmp/fireisp-install/docker-compose.yml" ]; then
         echo "Copying files from installation package..."
         find /tmp/fireisp-install -maxdepth 1 ! -name "." ! -name ".." -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
