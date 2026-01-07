@@ -17,10 +17,14 @@ CMD ["node", "server.js"]
 # Frontend build stage
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
+# Enable corepack to use yarn
+RUN corepack enable
 COPY frontend/package*.json ./
-RUN npm ci
+# Generate yarn.lock from package-lock.json and install with yarn
+RUN yarn import || true
+RUN yarn install --frozen-lockfile || yarn install
 COPY frontend/ ./
-RUN npm run build
+RUN yarn build
 
 # Frontend nginx stage
 FROM nginx:alpine AS frontend
