@@ -119,7 +119,7 @@ JWT_SECRET=$(openssl rand -base64 32)
 
 # Create .env file
 echo "Creating environment configuration..."
-cat > $INSTALL_DIR/.env << EOF
+cat > "$INSTALL_DIR/.env" << EOF
 # Database Configuration
 DB_PASSWORD=$DB_PASSWORD
 
@@ -136,23 +136,23 @@ EOF
 
 # Create necessary directories
 echo "Creating required directories..."
-mkdir -p $INSTALL_DIR/uploads
-mkdir -p $INSTALL_DIR/ssl
-mkdir -p $INSTALL_DIR/database/init
-mkdir -p $INSTALL_DIR/radius
+mkdir -p "$INSTALL_DIR/uploads"
+mkdir -p "$INSTALL_DIR/ssl"
+mkdir -p "$INSTALL_DIR/database/init"
+mkdir -p "$INSTALL_DIR/radius"
 
 # Create placeholder files
-touch $INSTALL_DIR/uploads/.gitkeep
-touch $INSTALL_DIR/ssl/.gitkeep
+touch "$INSTALL_DIR/uploads/.gitkeep"
+touch "$INSTALL_DIR/ssl/.gitkeep"
 
 # Set permissions
 echo "Setting permissions..."
-chown -R root:root $INSTALL_DIR
-chmod 600 $INSTALL_DIR/.env
+chown -R root:root "$INSTALL_DIR"
+chmod 600 "$INSTALL_DIR/.env"
 
 # Build and start containers
 echo "Building and starting Docker containers..."
-cd $INSTALL_DIR
+cd "$INSTALL_DIR"
 docker-compose pull
 docker-compose build
 docker-compose up -d
@@ -175,16 +175,16 @@ if docker-compose ps | grep -q "Up"; then
     echo "  2. Configure SSL certificate (optional)"
     echo "  3. Configure RADIUS settings"
     echo ""
-    echo "To view logs: cd $INSTALL_DIR && docker-compose logs -f"
-    echo "To stop: cd $INSTALL_DIR && docker-compose stop"
-    echo "To start: cd $INSTALL_DIR && docker-compose start"
-    echo "To restart: cd $INSTALL_DIR && docker-compose restart"
+    echo "To view logs: cd \"$INSTALL_DIR\" && docker-compose logs -f"
+    echo "To stop: cd \"$INSTALL_DIR\" && docker-compose stop"
+    echo "To start: cd \"$INSTALL_DIR\" && docker-compose start"
+    echo "To restart: cd \"$INSTALL_DIR\" && docker-compose restart"
     echo ""
     echo "Default credentials will be set during setup wizard"
     echo "================================================"
 else
     echo ""
     echo "ERROR: Some containers failed to start"
-    echo "Check logs with: cd $INSTALL_DIR && docker-compose logs"
+    echo "Check logs with: cd \"$INSTALL_DIR\" && docker-compose logs"
     exit 1
 fi
