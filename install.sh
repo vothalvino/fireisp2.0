@@ -93,9 +93,10 @@ else
     # Check if script is being run from a valid FireISP directory
     if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
         echo "Copying files from $SCRIPT_DIR..."
-        cp -r "$SCRIPT_DIR"/* $INSTALL_DIR/
-        # Copy hidden files as well (like .env.example, .gitignore)
-        cp -r "$SCRIPT_DIR"/.* $INSTALL_DIR/ 2>/dev/null || true
+        # Copy all visible files
+        cp -r "$SCRIPT_DIR"/* $INSTALL_DIR/ 2>/dev/null || true
+        # Copy hidden files (excluding . and ..)
+        find "$SCRIPT_DIR" -maxdepth 1 -name ".*" ! -name "." ! -name ".." ! -name ".git" -exec cp -r {} $INSTALL_DIR/ \; 2>/dev/null || true
     elif [ -f "/tmp/fireisp-install/docker-compose.yml" ]; then
         echo "Copying files from installation package..."
         cp -r /tmp/fireisp-install/* $INSTALL_DIR/
