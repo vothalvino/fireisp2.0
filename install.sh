@@ -94,10 +94,10 @@ else
     if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
         echo "Copying files from $SCRIPT_DIR..."
         # Copy all files (visible and hidden), excluding ., .., and .git
-        find "$SCRIPT_DIR" -maxdepth 1 ! -name "." ! -name ".." ! -name ".git" ! -path "$SCRIPT_DIR" -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
+        find "$SCRIPT_DIR" -maxdepth 1 ! -name "." ! -name ".." ! -name ".git" -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
     elif [ -f "/tmp/fireisp-install/docker-compose.yml" ]; then
         echo "Copying files from installation package..."
-        find /tmp/fireisp-install -maxdepth 1 ! -name "." ! -name ".." ! -path "/tmp/fireisp-install" -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
+        find /tmp/fireisp-install -maxdepth 1 ! -name "." ! -name ".." -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
     else
         echo "Error: Cannot find FireISP files."
         echo "Please run this script from the FireISP directory or clone the repository first."
