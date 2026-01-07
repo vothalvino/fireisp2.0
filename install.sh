@@ -2,6 +2,9 @@
 
 set -e
 
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # FireISP 2.0 Installation Script for Ubuntu 24.04
 echo "================================================"
 echo "FireISP 2.0 Installation Script"
@@ -87,12 +90,19 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     echo "Updating existing installation..."
     git pull
 else
-    # If running from local directory, copy files
-    if [ -f "/tmp/fireisp-install/docker-compose.yml" ]; then
+    # Check if script is being run from a valid FireISP directory
+    if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
+        echo "Copying files from $SCRIPT_DIR..."
+        cp -r "$SCRIPT_DIR"/* $INSTALL_DIR/
+        # Copy hidden files as well (like .env.example, .gitignore)
+        cp -r "$SCRIPT_DIR"/.* $INSTALL_DIR/ 2>/dev/null || true
+    elif [ -f "/tmp/fireisp-install/docker-compose.yml" ]; then
         echo "Copying files from installation package..."
         cp -r /tmp/fireisp-install/* $INSTALL_DIR/
     else
-        echo "Please clone the repository first or run this script from the FireISP directory"
+        echo "Error: Cannot find FireISP files."
+        echo "Please run this script from the FireISP directory or clone the repository first."
+        echo "Example: git clone https://github.com/vothalvino/fireisp2.0.git && cd fireisp2.0 && sudo bash install.sh"
         exit 1
     fi
 fi
