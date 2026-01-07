@@ -2,6 +2,9 @@
 
 set -e
 
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # FireISP 2.0 Installation Script for Ubuntu 24.04
 echo "================================================"
 echo "FireISP 2.0 Installation Script"
@@ -78,8 +81,8 @@ fi
 # Create installation directory
 INSTALL_DIR="/opt/fireisp"
 echo "Creating installation directory at $INSTALL_DIR..."
-mkdir -p $INSTALL_DIR
-cd $INSTALL_DIR
+mkdir -p "$INSTALL_DIR"
+cd "$INSTALL_DIR"
 
 # Clone or copy FireISP repository
 echo "Setting up FireISP application..."
@@ -87,12 +90,23 @@ if [ -d "$INSTALL_DIR/.git" ]; then
     echo "Updating existing installation..."
     git pull
 else
-    # If running from local directory, copy files
-    if [ -f "/tmp/fireisp-install/docker-compose.yml" ]; then
+    # Check if script is being run from a valid FireISP directory
+    if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
+        # Ensure we're not trying to copy a directory to itself
+        if [ "$SCRIPT_DIR" = "$INSTALL_DIR" ]; then
+            echo "Already running from installation directory, skipping file copy..."
+        else
+            echo "Copying files from $SCRIPT_DIR..."
+            # Copy all files (visible and hidden), excluding ., .., and .git
+            find "$SCRIPT_DIR" -maxdepth 1 ! -name "." ! -name ".." ! -name ".git" -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
+        fi
+    elif [ -f "/tmp/fireisp-install/docker-compose.yml" ]; then
         echo "Copying files from installation package..."
-        cp -r /tmp/fireisp-install/* $INSTALL_DIR/
+        find /tmp/fireisp-install -maxdepth 1 ! -name "." ! -name ".." -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
     else
-        echo "Please clone the repository first or run this script from the FireISP directory"
+        echo "Error: Cannot find FireISP files."
+        echo "Please run this script from the FireISP directory or clone the repository first."
+        echo "Example: git clone https://github.com/vothalvino/fireisp2.0.git && cd fireisp2.0 && sudo bash install.sh"
         exit 1
     fi
 fi
@@ -105,7 +119,7 @@ JWT_SECRET=$(openssl rand -base64 32)
 
 # Create .env file
 echo "Creating environment configuration..."
-cat > $INSTALL_DIR/.env << EOF
+cat > "$INSTALL_DIR/.env" << EOF
 # Database Configuration
 DB_PASSWORD=$DB_PASSWORD
 
@@ -122,23 +136,23 @@ EOF
 
 # Create necessary directories
 echo "Creating required directories..."
-mkdir -p $INSTALL_DIR/uploads
-mkdir -p $INSTALL_DIR/ssl
-mkdir -p $INSTALL_DIR/database/init
-mkdir -p $INSTALL_DIR/radius
+mkdir -p "$INSTALL_DIR/uploads"
+mkdir -p "$INSTALL_DIR/ssl"
+mkdir -p "$INSTALL_DIR/database/init"
+mkdir -p "$INSTALL_DIR/radius"
 
 # Create placeholder files
-touch $INSTALL_DIR/uploads/.gitkeep
-touch $INSTALL_DIR/ssl/.gitkeep
+touch "$INSTALL_DIR/uploads/.gitkeep"
+touch "$INSTALL_DIR/ssl/.gitkeep"
 
 # Set permissions
 echo "Setting permissions..."
-chown -R root:root $INSTALL_DIR
-chmod 600 $INSTALL_DIR/.env
+chown -R root:root "$INSTALL_DIR"
+chmod 600 "$INSTALL_DIR/.env"
 
 # Build and start containers
 echo "Building and starting Docker containers..."
-cd $INSTALL_DIR
+cd "$INSTALL_DIR"
 docker-compose pull
 docker-compose build
 docker-compose up -d
@@ -161,16 +175,16 @@ if docker-compose ps | grep -q "Up"; then
     echo "  2. Configure SSL certificate (optional)"
     echo "  3. Configure RADIUS settings"
     echo ""
-    echo "To view logs: cd $INSTALL_DIR && docker-compose logs -f"
-    echo "To stop: cd $INSTALL_DIR && docker-compose stop"
-    echo "To start: cd $INSTALL_DIR && docker-compose start"
-    echo "To restart: cd $INSTALL_DIR && docker-compose restart"
+    echo "To view logs: cd \"$INSTALL_DIR\" && docker-compose logs -f"
+    echo "To stop: cd \"$INSTALL_DIR\" && docker-compose stop"
+    echo "To start: cd \"$INSTALL_DIR\" && docker-compose start"
+    echo "To restart: cd \"$INSTALL_DIR\" && docker-compose restart"
     echo ""
     echo "Default credentials will be set during setup wizard"
     echo "================================================"
 else
     echo ""
     echo "ERROR: Some containers failed to start"
-    echo "Check logs with: cd $INSTALL_DIR && docker-compose logs"
+    echo "Check logs with: cd \"$INSTALL_DIR\" && docker-compose logs"
     exit 1
 fi
