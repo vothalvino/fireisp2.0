@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fireisp-postgres
+    environment:
+      POSTGRES_DB: fireisp
+      POSTGRES_USER: fireisp
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - fireisp-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fireisp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  radius:
+    image: freeradius/freeradius-server:latest
+    container_name: fireisp-radius
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+    volumes:
+      - ./radius/clients.conf:/etc/raddb/clients.conf
+      - ./radius/radiusd.conf:/etc/raddb/radiusd.conf
+      - ./radius/mods-available/sql:/etc/raddb/mods-available/sql
+      - ./radius/sites-available/default:/etc/raddb/sites-available/default
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fireisp
+      DB_USER: fireisp
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fireisp-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    container_name: fireisp-backend
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: fireisp
+      DB_USER: fireisp
+      DB_PASSWORD: ${DB_PASSWORD:-changeme}
+      RADIUS_HOST: radius
+      RADIUS_SECRET: ${RADIUS_SECRET:-testing123}
+      JWT_SECRET: ${JWT_SECRET:-changeme}
+      PORT: 3000
+    volumes:
+      - ./uploads:/app/uploads
+      - ./ssl:/app/ssl
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fireisp-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+    container_name: fireisp-frontend
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - fireisp-network
+    restart: unless-stopped
+
+networks:
+  fireisp-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
