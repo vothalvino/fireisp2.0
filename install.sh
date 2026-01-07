@@ -140,10 +140,26 @@ mkdir -p "$INSTALL_DIR/uploads"
 mkdir -p "$INSTALL_DIR/ssl"
 mkdir -p "$INSTALL_DIR/database/init"
 mkdir -p "$INSTALL_DIR/radius"
+mkdir -p "$INSTALL_DIR/nginx"
 
 # Create placeholder files
 touch "$INSTALL_DIR/uploads/.gitkeep"
 touch "$INSTALL_DIR/ssl/.gitkeep"
+
+# Verify critical files exist
+# This check is necessary because the file copy operation may fail silently,
+# or the installation might be running from a location without the nginx directory
+echo "Verifying critical files..."
+if [ ! -f "$INSTALL_DIR/nginx/nginx.conf" ]; then
+    if [ -f "$SCRIPT_DIR/nginx/nginx.conf" ]; then
+        echo "Copying nginx configuration from source..."
+        cp "$SCRIPT_DIR/nginx/nginx.conf" "$INSTALL_DIR/nginx/"
+    else
+        echo "ERROR: nginx.conf not found!"
+        echo "Please ensure the nginx directory with nginx.conf exists in the source."
+        exit 1
+    fi
+fi
 
 # Set permissions
 echo "Setting permissions..."
