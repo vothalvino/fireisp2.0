@@ -94,9 +94,9 @@ else
     if [ -f "$SCRIPT_DIR/docker-compose.yml" ]; then
         echo "Copying files from $SCRIPT_DIR..."
         # Copy all visible files
-        cp -r "$SCRIPT_DIR"/* $INSTALL_DIR/ 2>/dev/null || true
-        # Copy hidden files (excluding . and ..)
-        find "$SCRIPT_DIR" -maxdepth 1 -name ".*" ! -name "." ! -name ".." ! -name ".git" -exec cp -r {} $INSTALL_DIR/ \; 2>/dev/null || true
+        find "$SCRIPT_DIR" -maxdepth 1 ! -name ".*" ! -path "$SCRIPT_DIR" -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
+        # Copy hidden files (excluding . and .. and .git)
+        find "$SCRIPT_DIR" -maxdepth 1 -name ".*" ! -name "." ! -name ".." ! -name ".git" -exec cp -r {} "$INSTALL_DIR/" \; 2>/dev/null || true
     elif [ -f "/tmp/fireisp-install/docker-compose.yml" ]; then
         echo "Copying files from installation package..."
         cp -r /tmp/fireisp-install/* $INSTALL_DIR/
