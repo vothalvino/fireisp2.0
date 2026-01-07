@@ -147,6 +147,8 @@ touch "$INSTALL_DIR/uploads/.gitkeep"
 touch "$INSTALL_DIR/ssl/.gitkeep"
 
 # Verify critical files exist
+# This check is necessary because the file copy operation may fail silently,
+# or the installation might be running from a location without the nginx directory
 echo "Verifying critical files..."
 if [ ! -f "$INSTALL_DIR/nginx/nginx.conf" ]; then
     if [ -f "$SCRIPT_DIR/nginx/nginx.conf" ]; then
