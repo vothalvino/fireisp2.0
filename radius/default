@@ -1,0 +1,46 @@
+# Simplified FreeRADIUS default site configuration
+server default {
+    listen {
+        type = auth
+        ipaddr = *
+        port = 1812
+    }
+
+    listen {
+        type = acct
+        ipaddr = *
+        port = 1813
+    }
+
+    authorize {
+        filter_username
+        preprocess
+        suffix
+        sql
+        pap
+    }
+
+    authenticate {
+        pap
+    }
+
+    preacct {
+        preprocess
+        suffix
+    }
+
+    accounting {
+        sql
+    }
+
+    session {
+        sql
+    }
+
+    post-auth {
+        sql
+        Post-Auth-Type REJECT {
+            sql
+        }
+    }
+}

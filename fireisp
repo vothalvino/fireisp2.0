@@ -1,0 +1,86 @@
+#!/bin/bash
+
+# FireISP Management Script
+
+set -e
+
+INSTALL_DIR="/opt/fireisp"
+
+show_help() {
+    echo "FireISP 2.0 Management Script"
+    echo ""
+    echo "Usage: fireisp [command]"
+    echo ""
+    echo "Commands:"
+    echo "  start       Start all services"
+    echo "  stop        Stop all services"
+    echo "  restart     Restart all services"
+    echo "  status      Show service status"
+    echo "  logs        Show logs (use -f to follow)"
+    echo "  backup      Create database backup"
+    echo "  restore     Restore database from backup"
+    echo "  update      Update application"
+    echo "  shell       Open shell in container"
+    echo "  help        Show this help message"
+    echo ""
+}
+
+case "$1" in
+    start)
+        cd $INSTALL_DIR
+        docker-compose start
+        echo "FireISP services started"
+        ;;
+    stop)
+        cd $INSTALL_DIR
+        docker-compose stop
+        echo "FireISP services stopped"
+        ;;
+    restart)
+        cd $INSTALL_DIR
+        docker-compose restart
+        echo "FireISP services restarted"
+        ;;
+    status)
+        cd $INSTALL_DIR
+        docker-compose ps
+        ;;
+    logs)
+        cd $INSTALL_DIR
+        shift
+        docker-compose logs "$@"
+        ;;
+    backup)
+        cd $INSTALL_DIR
+        BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).sql"
+        docker-compose exec -T postgres pg_dump -U fireisp fireisp > "$BACKUP_FILE"
+        echo "Backup created: $BACKUP_FILE"
+        ;;
+    restore)
+        if [ -z "$2" ]; then
+            echo "Usage: fireisp restore <backup_file>"
+            exit 1
+        fi
+        cd $INSTALL_DIR
+        cat "$2" | docker-compose exec -T postgres psql -U fireisp fireisp
+        echo "Database restored from $2"
+        ;;
+    update)
+        cd $INSTALL_DIR
+        echo "Pulling latest changes..."
+        git pull
+        echo "Rebuilding containers..."
+        docker-compose build
+        echo "Restarting services..."
+        docker-compose up -d
+        echo "Update complete"
+        ;;
+    shell)
+        cd $INSTALL_DIR
+        CONTAINER=${2:-backend}
+        docker-compose exec $CONTAINER /bin/sh
+        ;;
+    help|*)
+        show_help
+        ;;
+esac
