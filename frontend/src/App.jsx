@@ -7,6 +7,9 @@ import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
 import Services from './pages/Services';
 import Radius from './pages/Radius';
+import Invoices from './pages/Invoices';
+import Users from './pages/Users';
+import Settings from './pages/Settings';
 import Layout from './components/Layout';
 
 function App() {
@@ -64,6 +67,9 @@ function App() {
           <Route path="clients" element={<Clients />} />
           <Route path="services" element={<Services />} />
           <Route path="radius" element={<Radius />} />
+          <Route path="invoices" element={<Invoices />} />
+          <Route path="users" element={<Users />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>

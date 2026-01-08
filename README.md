@@ -11,7 +11,10 @@ Modern ISP Management System with Docker containerization, CRM functionality, mu
 - 💼 **CRM System** - Complete customer relationship management
 - 📦 **Multi-Service Support** - Manage multiple services per client (Internet, IPTV, VoIP, etc.)
 - 🔌 **FreeRADIUS Integration** - Built-in RADIUS server with Mikrotik support
-- 🎨 **Modern Web UI** - React-based responsive interface
+- 🎨 **Modern Web UI** - React-based responsive interface with full GUI coverage
+- 💰 **Invoice Management** - Complete billing and payment tracking system
+- 👥 **Multi-User Support** - User management with role-based access control
+- ⚙️ **System Settings** - Web-based configuration for all system parameters
 - 🔒 **Secure** - JWT authentication, optional SSL/HTTPS support
 
 ## Architecture
@@ -195,18 +198,66 @@ SSL can be configured in two ways:
    - User statistics
    - Bandwidth usage
 
+### Managing Invoices
+
+1. Navigate to **Invoices** section
+2. Click **Create Invoice**
+3. Fill in invoice details:
+   - Invoice number
+   - Select client
+   - Issue and due dates
+   - Add line items (services)
+4. System automatically calculates:
+   - Subtotal
+   - Tax (10%)
+   - Total amount
+5. Record payments:
+   - Click on invoice
+   - Add payment with amount and method
+   - Invoice status auto-updates when fully paid
+
+### Managing Users
+
+1. Go to **Users** section
+2. Click **Add User**
+3. Create user account:
+   - Username and email
+   - Password
+   - Role (User or Admin)
+4. Manage existing users:
+   - Edit user details
+   - Change passwords
+   - Activate/deactivate accounts
+   - Delete users
+
+### System Settings
+
+1. Navigate to **Settings** section
+2. Configure:
+   - Company information
+   - SSL/HTTPS settings
+   - RADIUS configuration
+   - Email settings (SMTP)
+   - Application preferences
+3. Click **Save Settings** to apply changes
+
 ## Database Structure
 
 The system includes organized tables for:
 
-- **Users** - System administrators
-- **Clients** - Customer database
-- **Service Types** - Internet, IPTV, VoIP, etc.
-- **Service Plans** - Speed and pricing plans
-- **Client Services** - Active service subscriptions
-- **RADIUS Tables** - Authentication and accounting
+- **Users** - System administrators with role-based access
+- **Clients** - Customer database with full contact information
+- **Service Types** - Internet, IPTV, VoIP, Hosting, etc.
+- **Service Plans** - Speed and pricing plans per service type
+- **Client Services** - Active service subscriptions (many per client)
+- **RADIUS Tables** - Authentication (radcheck, radreply) and accounting (radacct)
 - **NAS** - Network Access Servers (Mikrotik routers)
-- **Invoices & Payments** - Billing system
+- **Invoices** - Invoice headers with client and dates
+- **Invoice Items** - Line items for each invoice
+- **Payments** - Payment records linked to invoices
+- **System Settings** - Key-value configuration store
+
+**Total:** 13+ tables with full web GUI access for all operations.
 
 ## Management Commands
 

@@ -10,6 +10,9 @@ const clientRoutes = require('./src/routes/clients');
 const serviceRoutes = require('./src/routes/services');
 const radiusRoutes = require('./src/routes/radius');
 const dashboardRoutes = require('./src/routes/dashboard');
+const invoiceRoutes = require('./src/routes/invoices');
+const userRoutes = require('./src/routes/users');
+const settingsRoutes = require('./src/routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +38,9 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/radius', radiusRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
