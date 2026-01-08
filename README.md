@@ -61,7 +61,9 @@ http://your-server-ip
 
 4. Complete the setup wizard:
    - Create root user account
-   - Configure SSL (optional)
+   - Configure SSL (optional):
+     - **Let's Encrypt** (Recommended): Automatic free SSL certificate
+     - **Manual Upload**: Use your own SSL certificate
    - Enter company information
 
 ## Manual Installation
@@ -113,6 +115,9 @@ RADIUS_SECRET=your_radius_secret
 # Application
 JWT_SECRET=your_jwt_secret
 
+# Let's Encrypt (optional)
+LETSENCRYPT_STAGING=false  # Set to true for testing to avoid rate limits
+
 # Ports
 HTTP_PORT=80
 HTTPS_PORT=443
@@ -120,16 +125,29 @@ HTTPS_PORT=443
 
 ### SSL Configuration
 
-SSL can be configured in two ways:
+SSL can be configured in three ways:
 
-1. **During Setup Wizard** (Recommended)
-   - Upload certificate and private key through the web interface
+1. **During Setup Wizard - Let's Encrypt** (Recommended)
+   - Automatically obtains a free SSL certificate from Let's Encrypt
+   - Requires a valid domain name pointing to your server
+   - Provide domain name and email address in the setup wizard
+   - Certificate is automatically validated and configured
+   - For testing: Set `LETSENCRYPT_STAGING=true` in `.env` to use staging environment and avoid rate limits
 
-2. **Manual Configuration**
+2. **During Setup Wizard - Manual Upload**
+   - Upload your own certificate and private key through the web interface
+   - Useful if you already have a commercial SSL certificate
+
+3. **Manual Configuration**
    - Place certificate files in `./ssl/` directory:
      - `cert.pem` - SSL certificate
      - `key.pem` - Private key
    - Restart containers: `docker-compose restart`
+
+**Let's Encrypt Requirements:**
+- Domain name must be publicly accessible and point to your server's IP
+- Port 80 must be open for HTTP-01 challenge validation
+- Valid email address for certificate expiration notifications
 
 ## Mikrotik Integration
 

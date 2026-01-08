@@ -231,6 +231,9 @@ CREATE TABLE system_settings (
 INSERT INTO system_settings (key, value, description) VALUES
     ('setup_completed', 'false', 'Whether initial setup wizard has been completed'),
     ('ssl_enabled', 'false', 'Whether SSL is enabled'),
+    ('ssl_method', '', 'SSL certificate method: letsencrypt or manual'),
+    ('letsencrypt_domain', '', 'Domain name for Let''s Encrypt certificate'),
+    ('letsencrypt_email', '', 'Email address for Let''s Encrypt notifications'),
     ('company_name', 'FireISP', 'Company name'),
     ('company_email', '', 'Company email'),
     ('company_phone', '', 'Company phone');
