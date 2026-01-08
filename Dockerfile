@@ -4,7 +4,7 @@
 FROM node:20-alpine AS backend-builder
 WORKDIR /app
 COPY backend/package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 COPY backend/ ./
 
 FROM node:20-alpine AS backend
@@ -17,14 +17,12 @@ CMD ["node", "server.js"]
 # Frontend build stage
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
-# Enable corepack to use yarn
-RUN corepack enable
 COPY frontend/package*.json ./
-# Generate yarn.lock from package-lock.json and install with yarn
-RUN yarn import || true
-RUN yarn install --frozen-lockfile || yarn install
+# Try npm ci first, fallback to npm install if lockfile doesn't work
+RUN npm ci || npm install
 COPY frontend/ ./
-RUN yarn build
+# Build frontend - if dist already exists from local build, this will rebuild it
+RUN npm run build
 
 # Frontend nginx stage
 FROM nginx:alpine AS frontend
