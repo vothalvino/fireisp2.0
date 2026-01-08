@@ -126,7 +126,8 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
             }
             
             // Validate domain format (basic check)
-            const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?(\.[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?)*\.[a-zA-Z]{2,}$/;
+            // Allow single-character labels and properly validate domain structure
+            const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
             if (!domainRegex.test(domain)) {
                 return res.status(400).json({ 
                     error: { message: 'Invalid domain format. Please enter a valid domain name (e.g., example.com or subdomain.example.com)' } 
@@ -194,7 +195,8 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                             path.join(challengeDir, challenge.token),
                             keyAuthorization
                         );
-                        console.log(`[Let's Encrypt] Challenge file created: ${challenge.token}`);
+                        // Log truncated token for security (avoid exposing full token in logs)
+                        console.log(`[Let's Encrypt] Challenge file created: ${challenge.token.substring(0, 16)}...`);
                     },
                     challengeRemoveFn: async (authz, challenge) => {
                         // Clean up challenge file
@@ -202,6 +204,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                         const challengeFile = path.join(sslDir, '.well-known', 'acme-challenge', challenge.token);
                         try {
                             await fs.unlink(challengeFile);
+                            console.log(`[Let's Encrypt] Challenge file removed: ${challenge.token.substring(0, 16)}...`);
                         } catch (err) {
                             // Ignore error if file doesn't exist (ENOENT)
                             if (err.code !== 'ENOENT') {
@@ -252,12 +255,18 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 let errorMessage = `Failed to obtain Let's Encrypt certificate: ${error.message}`;
                 
                 // Provide more helpful error messages for common issues
-                if (error.message && error.message.includes('DNS')) {
+                // Check for specific error patterns more carefully to avoid false positives
+                if (error.message && (error.message.toLowerCase().includes('dns resolution') || 
+                    error.message.toLowerCase().includes('nxdomain') ||
+                    error.message.toLowerCase().includes('getaddrinfo'))) {
                     errorMessage += '. Please ensure your domain\'s DNS A record points to this server\'s IP address.';
-                } else if (error.message && error.message.includes('challenge')) {
+                } else if (error.message && (error.message.toLowerCase().includes('challenge') && 
+                    (error.message.toLowerCase().includes('fail') || error.message.toLowerCase().includes('invalid')))) {
                     errorMessage += '. Please ensure port 80 is accessible from the internet and not blocked by a firewall.';
-                } else if (error.message && error.message.includes('rate limit')) {
+                } else if (error.message && error.message.toLowerCase().includes('rate limit')) {
                     errorMessage += '. Let\'s Encrypt rate limit reached. Consider using staging mode or try again later.';
+                } else if (error.message && error.message.toLowerCase().includes('unauthorized')) {
+                    errorMessage += '. The certificate request was not authorized. This could be due to DNS issues or challenge validation failure.';
                 }
                 
                 return res.status(500).json({ 
