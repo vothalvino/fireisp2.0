@@ -25,9 +25,9 @@ services:
       - "1812:1812/udp"
       - "1813:1813/udp"
     volumes:
-      - ./radius/clients.conf:/etc/raddb/clients.conf
-      - ./radius/sql:/etc/raddb/mods-available/sql
-      - ./radius/default:/etc/raddb/sites-available/default
+      - ./radius/clients.conf:/etc/raddb/clients.conf:ro
+      - ./radius/sql:/etc/raddb/mods-available/sql:ro
+      - ./radius/default:/etc/raddb/sites-available/default:ro
     environment:
       DB_HOST: postgres
       DB_PORT: 5432

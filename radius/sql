@@ -4,11 +4,11 @@ sql {
     dialect = "postgresql"
 
     # Connection info
-    server = "ENV:DB_HOST"
-    port = ENV:DB_PORT
-    login = "ENV:DB_USER"
-    password = "ENV:DB_PASSWORD"
-    radius_db = "ENV:DB_NAME"
+    server = "${ENV:DB_HOST}"
+    port = ${ENV:DB_PORT}
+    login = "${ENV:DB_USER}"
+    password = "${ENV:DB_PASSWORD}"
+    radius_db = "${ENV:DB_NAME}"
 
     # Database connection pool
     pool {
