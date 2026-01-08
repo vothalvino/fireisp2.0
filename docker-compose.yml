@@ -58,6 +58,7 @@ services:
       RADIUS_SECRET: ${RADIUS_SECRET:-testing123}
       JWT_SECRET: ${JWT_SECRET:-changeme}
       PORT: 3000
+      LETSENCRYPT_STAGING: ${LETSENCRYPT_STAGING:-false}
     volumes:
       - ./uploads:/app/uploads
       - ./ssl:/app/ssl

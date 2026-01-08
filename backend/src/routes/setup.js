@@ -125,7 +125,28 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 });
             }
             
+            // Validate domain format (basic check)
+            // Allow single-character labels and properly validate domain structure
+            const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+            if (!domainRegex.test(domain)) {
+                return res.status(400).json({ 
+                    error: { message: 'Invalid domain format. Please enter a valid domain name (e.g., example.com or subdomain.example.com)' } 
+                });
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ 
+                    error: { message: 'Invalid email format' } 
+                });
+            }
+            
             try {
+                console.log('[Let\'s Encrypt] Starting certificate acquisition process');
+                console.log(`[Let\'s Encrypt] Domain: ${domain}`);
+                console.log(`[Let\'s Encrypt] Email: ${email}`);
+                
                 // Create ACME client
                 // Use staging environment if LETSENCRYPT_STAGING=true for testing
                 const useStaging = process.env.LETSENCRYPT_STAGING === 'true';
@@ -133,23 +154,28 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     ? acme.directory.letsencrypt.staging 
                     : acme.directory.letsencrypt.production;
                 
+                if (useStaging) {
+                    console.log('[Let\'s Encrypt] Using staging environment for testing');
+                } else {
+                    console.log('[Let\'s Encrypt] Using production environment');
+                }
+                
+                console.log('[Let\'s Encrypt] Creating ACME account key');
                 const accountKey = await acme.forge.createPrivateKey();
                 const client = new acme.Client({
                     directoryUrl,
                     accountKey
                 });
                 
-                if (useStaging) {
-                    console.log('Using Let\'s Encrypt staging environment for testing');
-                }
-                
                 // Create account
+                console.log('[Let\'s Encrypt] Creating ACME account');
                 await client.createAccount({
                     termsOfServiceAgreed: true,
                     contact: [`mailto:${email}`]
                 });
                 
                 // Create certificate key
+                console.log('[Let\'s Encrypt] Creating certificate signing request');
                 const [certKey, certCsr] = await acme.forge.createCsr({
                     commonName: domain
                 });
@@ -159,20 +185,26 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     csr: certCsr,
                     email,
                     termsOfServiceAgreed: true,
+                    challengePriority: ['http-01'],
                     challengeCreateFn: async (authz, challenge, keyAuthorization) => {
                         // Store challenge for HTTP-01 validation
+                        console.log(`[Let's Encrypt] Creating HTTP-01 challenge for ${authz.identifier.value}`);
                         const challengeDir = path.join(sslDir, '.well-known', 'acme-challenge');
                         await fs.mkdir(challengeDir, { recursive: true });
                         await fs.writeFile(
                             path.join(challengeDir, challenge.token),
                             keyAuthorization
                         );
+                        // Log truncated token for security (avoid exposing full token in logs)
+                        console.log(`[Let's Encrypt] Challenge file created: ${challenge.token.substring(0, 16)}...`);
                     },
                     challengeRemoveFn: async (authz, challenge) => {
                         // Clean up challenge file
+                        console.log(`[Let's Encrypt] Removing challenge file for ${authz.identifier.value}`);
                         const challengeFile = path.join(sslDir, '.well-known', 'acme-challenge', challenge.token);
                         try {
                             await fs.unlink(challengeFile);
+                            console.log(`[Let's Encrypt] Challenge file removed: ${challenge.token.substring(0, 16)}...`);
                         } catch (err) {
                             // Ignore error if file doesn't exist (ENOENT)
                             if (err.code !== 'ENOENT') {
@@ -183,10 +215,13 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 });
                 
                 // Save certificate and key
+                console.log('[Let\'s Encrypt] Certificate obtained successfully');
+                console.log('[Let\'s Encrypt] Saving certificate files');
                 await fs.writeFile(path.join(sslDir, 'cert.pem'), cert);
                 await fs.writeFile(path.join(sslDir, 'key.pem'), certKey);
                 
                 // Store Let's Encrypt configuration for renewal
+                console.log('[Let\'s Encrypt] Updating database settings');
                 await db.query(
                     "UPDATE system_settings SET value = $1 WHERE key = 'letsencrypt_domain'",
                     [domain]
@@ -204,16 +239,39 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     "UPDATE system_settings SET value = 'true' WHERE key = 'ssl_enabled'"
                 );
                 
+                console.log('[Let\'s Encrypt] Setup completed successfully');
                 res.json({ 
                     message: 'Let\'s Encrypt certificate obtained successfully', 
                     sslEnabled: true,
                     domain 
                 });
             } catch (error) {
-                console.error('Let\'s Encrypt error:', error);
+                console.error('[Let\'s Encrypt] Error:', error);
+                console.error('[Let\'s Encrypt] Error details:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                let errorMessage = `Failed to obtain Let's Encrypt certificate: ${error.message}`;
+                
+                // Provide more helpful error messages for common issues
+                // Check for specific error patterns more carefully to avoid false positives
+                if (error.message && (error.message.toLowerCase().includes('dns resolution') || 
+                    error.message.toLowerCase().includes('nxdomain') ||
+                    error.message.toLowerCase().includes('getaddrinfo'))) {
+                    errorMessage += '. Please ensure your domain\'s DNS A record points to this server\'s IP address.';
+                } else if (error.message && (error.message.toLowerCase().includes('challenge') && 
+                    (error.message.toLowerCase().includes('fail') || error.message.toLowerCase().includes('invalid')))) {
+                    errorMessage += '. Please ensure port 80 is accessible from the internet and not blocked by a firewall.';
+                } else if (error.message && error.message.toLowerCase().includes('rate limit')) {
+                    errorMessage += '. Let\'s Encrypt rate limit reached. Consider using staging mode or try again later.';
+                } else if (error.message && error.message.toLowerCase().includes('unauthorized')) {
+                    errorMessage += '. The certificate request was not authorized. This could be due to DNS issues or challenge validation failure.';
+                }
+                
                 return res.status(500).json({ 
                     error: { 
-                        message: `Failed to obtain Let's Encrypt certificate: ${error.message}` 
+                        message: errorMessage 
                     } 
                 });
             }
