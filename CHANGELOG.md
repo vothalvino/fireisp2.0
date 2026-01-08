@@ -8,10 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
-- Fixed nginx proxy configuration causing API connection refused errors
-  - Changed `proxy_pass` from `http://backend:3000/api/` to `http://backend:3000/`
-  - Prevents double `/api/` path in API requests
-  - Resolves "connection refused" errors when accessing the GUI
+- Fixed nginx proxy configuration causing HTTP/HTTPS connection issues
+  - Changed `proxy_pass` from `http://backend:3000/` to `http://backend:3000/api/`
+  - Ensures API requests properly route to backend with correct path
+  - Previous fix was incorrect - backend expects `/api/` prefix in all routes
+  - Resolves "connection refused" and 404 errors when accessing API endpoints
 
 ## [2.0.0] - 2024-01-07
 
