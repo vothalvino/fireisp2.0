@@ -107,7 +107,7 @@ function Settings() {
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>SSL Configuration</h3>
           <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
               <input
                 type="checkbox"
                 checked={settings.ssl_enabled === 'true'}
@@ -115,9 +115,77 @@ function Settings() {
               />
               Enable SSL/HTTPS
             </label>
-            <p style={{ fontSize: '14px', color: '#666', marginTop: '10px' }}>
-              Note: SSL certificates must be placed in the ssl/ directory and containers restarted for SSL to work.
-            </p>
+
+            {settings.ssl_enabled === 'true' && (
+              <div style={{ marginTop: '20px' }}>
+                <div style={{ marginBottom: '15px' }}>
+                  <label>SSL Method</label>
+                  <select
+                    value={settings.ssl_method || 'letsencrypt'}
+                    onChange={(e) => handleInputChange('ssl_method', e.target.value)}
+                    style={{ 
+                      padding: '8px 12px', 
+                      borderRadius: '4px', 
+                      border: '1px solid #ddd',
+                      width: '100%',
+                      fontSize: '14px'
+                    }}
+                  >
+                    <option value="letsencrypt">Let's Encrypt (Automatic)</option>
+                    <option value="manual">Manual Certificate Upload</option>
+                  </select>
+                  <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                    {settings.ssl_method === 'manual' 
+                      ? "Upload your own SSL certificate and private key in PEM format."
+                      : "Let's Encrypt will automatically obtain and configure a free SSL certificate for your domain."}
+                  </p>
+                </div>
+
+                {settings.ssl_method !== 'manual' && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+                    <div>
+                      <label>Domain Name</label>
+                      <input
+                        type="text"
+                        value={settings.letsencrypt_domain || ''}
+                        onChange={(e) => handleInputChange('letsencrypt_domain', e.target.value)}
+                        placeholder="example.com"
+                      />
+                      <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                        Enter your domain name (e.g., fireisp.example.com). Make sure this domain points to this server's IP address.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label>Email Address</label>
+                      <input
+                        type="email"
+                        value={settings.letsencrypt_email || ''}
+                        onChange={(e) => handleInputChange('letsencrypt_email', e.target.value)}
+                        placeholder="admin@example.com"
+                      />
+                      <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
+                        Email for Let's Encrypt certificate expiration notifications.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {settings.ssl_method === 'manual' && (
+                  <div>
+                    <p style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+                      Note: For manual certificates, place your cert.pem and key.pem files in the ssl/ directory and restart containers.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {settings.ssl_enabled !== 'true' && (
+              <p style={{ fontSize: '14px', color: '#666', marginTop: '10px' }}>
+                Enable SSL to configure HTTPS for secure connections.
+              </p>
+            )}
           </div>
         </div>
 
