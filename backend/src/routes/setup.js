@@ -9,6 +9,27 @@ const acme = require('acme-client');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
+// Middleware to check if setup is not completed
+// Prevents abuse of setup endpoints after initial configuration
+async function requireSetupNotCompleted(req, res, next) {
+    try {
+        const result = await db.query(
+            "SELECT value FROM system_settings WHERE key = 'setup_completed'"
+        );
+        
+        if (result.rows[0]?.value === 'true') {
+            return res.status(403).json({ 
+                error: { message: 'Setup already completed. These endpoints are disabled.' } 
+            });
+        }
+        
+        next();
+    } catch (error) {
+        console.error('Setup check error:', error);
+        res.status(500).json({ error: { message: 'Failed to verify setup status' } });
+    }
+}
+
 // Check setup status
 router.get('/status', async (req, res) => {
     try {
@@ -29,18 +50,9 @@ router.get('/status', async (req, res) => {
 });
 
 // Create root user (Step 1 of setup)
-router.post('/root-user', async (req, res) => {
+router.post('/root-user', requireSetupNotCompleted, async (req, res) => {
     try {
         const { username, email, password, fullName } = req.body;
-        
-        // Check if setup is already completed
-        const setupCheck = await db.query(
-            "SELECT value FROM system_settings WHERE key = 'setup_completed'"
-        );
-        
-        if (setupCheck.rows[0]?.value === 'true') {
-            return res.status(400).json({ error: { message: 'Setup already completed' } });
-        }
         
         // Check if user already exists
         const userCheck = await db.query(
@@ -90,7 +102,7 @@ router.post('/root-user', async (req, res) => {
 });
 
 // Configure SSL (Step 2 of setup)
-router.post('/ssl', async (req, res) => {
+router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
     try {
         const { enabled, method, certificate, privateKey, domain, email } = req.body;
         
@@ -232,7 +244,7 @@ router.post('/ssl', async (req, res) => {
 });
 
 // Complete setup
-router.post('/complete', async (req, res) => {
+router.post('/complete', requireSetupNotCompleted, async (req, res) => {
     try {
         const { companyName, companyEmail, companyPhone } = req.body;
         
