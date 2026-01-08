@@ -5,6 +5,14 @@ All notable changes to FireISP 2.0 will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- Fixed nginx proxy configuration causing API connection refused errors
+  - Changed `proxy_pass` from `http://backend:3000/api/` to `http://backend:3000/`
+  - Prevents double `/api/` path in API requests
+  - Resolves "connection refused" errors when accessing the GUI
+
 ## [2.0.0] - 2024-01-07
 
 ### Added
