@@ -115,11 +115,21 @@ router.post('/ssl', async (req, res) => {
             
             try {
                 // Create ACME client
+                // Use staging environment if LETSENCRYPT_STAGING=true for testing
+                const useStaging = process.env.LETSENCRYPT_STAGING === 'true';
+                const directoryUrl = useStaging 
+                    ? acme.directory.letsencrypt.staging 
+                    : acme.directory.letsencrypt.production;
+                
                 const accountKey = await acme.forge.createPrivateKey();
                 const client = new acme.Client({
-                    directoryUrl: acme.directory.letsencrypt.production,
+                    directoryUrl,
                     accountKey
                 });
+                
+                if (useStaging) {
+                    console.log('Using Let\'s Encrypt staging environment for testing');
+                }
                 
                 // Create account
                 await client.createAccount({
@@ -152,7 +162,10 @@ router.post('/ssl', async (req, res) => {
                         try {
                             await fs.unlink(challengeFile);
                         } catch (err) {
-                            // Ignore error if file doesn't exist
+                            // Ignore error if file doesn't exist (ENOENT)
+                            if (err.code !== 'ENOENT') {
+                                console.error('Error removing challenge file:', err);
+                            }
                         }
                     }
                 });

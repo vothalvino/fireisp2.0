@@ -115,6 +115,9 @@ RADIUS_SECRET=your_radius_secret
 # Application
 JWT_SECRET=your_jwt_secret
 
+# Let's Encrypt (optional)
+LETSENCRYPT_STAGING=false  # Set to true for testing to avoid rate limits
+
 # Ports
 HTTP_PORT=80
 HTTPS_PORT=443
@@ -129,6 +132,7 @@ SSL can be configured in three ways:
    - Requires a valid domain name pointing to your server
    - Provide domain name and email address in the setup wizard
    - Certificate is automatically validated and configured
+   - For testing: Set `LETSENCRYPT_STAGING=true` in `.env` to use staging environment and avoid rate limits
 
 2. **During Setup Wizard - Manual Upload**
    - Upload your own certificate and private key through the web interface
