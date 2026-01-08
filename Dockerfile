@@ -4,7 +4,7 @@
 FROM node:20-alpine AS backend-builder
 WORKDIR /app
 COPY backend/package*.json ./
-RUN npm install
+RUN npm ci
 COPY backend/ ./
 
 FROM node:20-alpine AS backend
@@ -18,11 +18,11 @@ CMD ["node", "server.js"]
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 COPY frontend/package*.json ./
-# Try npm install, but continue even if it fails since we might have pre-built dist
-RUN npm install || true
+# Try npm ci first, fallback to npm install if lockfile doesn't work
+RUN npm ci || npm install
 COPY frontend/ ./
-# Try to build, but if dist already exists, skip
-RUN npm run build || true
+# Build frontend - if dist already exists from local build, this will rebuild it
+RUN npm run build
 
 # Frontend nginx stage
 FROM nginx:alpine AS frontend
