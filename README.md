@@ -300,23 +300,93 @@ docker-compose stop
 docker-compose start
 ```
 
-### Update Application
+## Updating FireISP
+
+FireISP provides an automated update system for easy upgrades.
+
+### Quick Update (Recommended)
+
+For the easiest update experience:
+
 ```bash
 cd /opt/fireisp
-git pull
-docker-compose build
-docker-compose up -d
+sudo ./update.sh
 ```
+
+The update script will:
+- Check for available updates
+- Create an automatic backup
+- Apply database migrations
+- Rebuild containers
+- Restart services
+- Verify the update
+
+### Check for Updates
+
+```bash
+cd /opt/fireisp
+./fireisp update --check
+```
+
+### Manual Update
+
+If you prefer to update manually:
+
+```bash
+cd /opt/fireisp
+./fireisp backup          # Create backup first
+git pull                  # Pull latest changes
+docker-compose build      # Rebuild containers
+docker-compose up -d      # Restart services
+```
+
+### Rollback
+
+If something goes wrong:
+
+```bash
+cd /opt/fireisp
+sudo ./update.sh --rollback
+```
+
+**For detailed update instructions, troubleshooting, and version-specific notes, see [UPDATE.md](UPDATE.md)**
+
+### Check Your Version
+
+```bash
+cat /opt/fireisp/VERSION
+# or
+./fireisp version
+```
+
+## Backup and Restore
 
 ### Backup Database
 ```bash
-docker-compose exec postgres pg_dump -U fireisp fireisp > backup.sql
+cd /opt/fireisp
+./fireisp backup
+# Backup saved to: backups/backup_YYYYMMDD_HHMMSS.sql
+```
+
+### Restore from Backup
+```bash
+cd /opt/fireisp
+./fireisp restore backups/backup_YYYYMMDD_HHMMSS.sql
 ```
 
 ### Restore Database
 ```bash
 cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 ```
+
+## Documentation
+
+- **[UPDATE.md](UPDATE.md)** - Comprehensive update guide with troubleshooting
+- **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
+- **[MIKROTIK.md](MIKROTIK.md)** - Mikrotik integration guide
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
+- **[RELEASE_PROCESS.md](RELEASE_PROCESS.md)** - For maintainers: release procedures
 
 ## Troubleshooting
 

@@ -118,7 +118,22 @@ RADIUS → Select username → View accounting data
 ### Backup Database
 ```bash
 cd /opt/fireisp
-docker-compose exec postgres pg_dump -U fireisp fireisp > backup_$(date +%Y%m%d).sql
+./fireisp backup
+# Backup saved to: backups/backup_YYYYMMDD_HHMMSS.sql
+```
+
+### Update FireISP
+```bash
+cd /opt/fireisp
+sudo ./update.sh
+```
+
+For detailed update instructions, see [UPDATE.md](UPDATE.md)
+
+### Check Version
+```bash
+cd /opt/fireisp
+./fireisp version
 ```
 
 ### View Logs

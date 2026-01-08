@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Comprehensive update system for easy application updates
+  - `update.sh` script with automatic backup, migration, and rollback capabilities
+  - Version checking and health verification
+  - Detailed logging of update process
+- `VERSION` file for semantic versioning tracking
+- Database migration framework with tracking system
+  - `database/migrations/` directory structure
+  - Migration tracking table (`schema_migrations`)
+  - Documentation for creating and applying migrations
+- Enhanced `fireisp` CLI management script
+  - `version` command to check current version
+  - `update` command now uses the comprehensive update script
+  - Improved backup organization (saves to `backups/` directory)
+- Comprehensive documentation:
+  - `UPDATE.md` - Complete update guide with troubleshooting
+  - `RELEASE_PROCESS.md` - Release procedures for maintainers
+  - `database/migrations/README.md` - Migration creation guide
+
+### Changed
+- Backup files now saved to `backups/` directory instead of root
+- `fireisp` script now supports passing arguments to update command
+- README.md now includes dedicated update section with version checking
+- Enhanced `.gitignore` to exclude backup files and update artifacts
+
 ### Fixed
 - Fixed nginx proxy configuration causing HTTP/HTTPS connection issues
   - Changed `proxy_pass` from `http://backend:3000/` to `http://backend:3000/api/`
