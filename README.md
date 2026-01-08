@@ -251,6 +251,33 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 
 ## Troubleshooting
 
+### GUI Shows "Connection Refused" Error
+
+If you see an error message like "La página ha rechazado la conexión" (connection refused) when trying to access the GUI:
+
+1. **Check if all containers are running:**
+   ```bash
+   cd /opt/fireisp
+   docker-compose ps
+   ```
+   All containers should show "Up" status.
+
+2. **Restart the containers:**
+   ```bash
+   docker-compose restart
+   ```
+
+3. **Check backend logs for errors:**
+   ```bash
+   docker-compose logs backend
+   ```
+
+4. **Verify the nginx proxy configuration is correct:**
+   The nginx configuration should proxy `/api/` requests to `http://backend:3000/` (not `http://backend:3000/api/`).
+
+5. **Clear browser cache:**
+   Sometimes browser cache can cause connection issues. Clear your browser cache and try again.
+
 ### Check Container Status
 ```bash
 docker-compose ps
