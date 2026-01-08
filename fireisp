@@ -9,7 +9,7 @@ INSTALL_DIR="/opt/fireisp"
 show_help() {
     echo "FireISP 2.0 Management Script"
     echo ""
-    echo "Usage: fireisp [command]"
+    echo "Usage: fireisp [command] [options]"
     echo ""
     echo "Commands:"
     echo "  start       Start all services"
@@ -19,9 +19,15 @@ show_help() {
     echo "  logs        Show logs (use -f to follow)"
     echo "  backup      Create database backup"
     echo "  restore     Restore database from backup"
-    echo "  update      Update application"
+    echo "  update      Update application (uses update.sh script)"
+    echo "  version     Show current version"
     echo "  shell       Open shell in container"
     echo "  help        Show this help message"
+    echo ""
+    echo "Update Options:"
+    echo "  fireisp update              Run automated update"
+    echo "  fireisp update --check      Check for updates without applying"
+    echo "  fireisp update --rollback   Rollback to previous version"
     echo ""
 }
 
@@ -52,7 +58,8 @@ case "$1" in
         ;;
     backup)
         cd $INSTALL_DIR
-        BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).sql"
+        mkdir -p backups
+        BACKUP_FILE="backups/backup_$(date +%Y%m%d_%H%M%S).sql"
         docker-compose exec -T postgres pg_dump -U fireisp fireisp > "$BACKUP_FILE"
         echo "Backup created: $BACKUP_FILE"
         ;;
@@ -67,13 +74,27 @@ case "$1" in
         ;;
     update)
         cd $INSTALL_DIR
-        echo "Pulling latest changes..."
-        git pull
-        echo "Rebuilding containers..."
-        docker-compose build
-        echo "Restarting services..."
-        docker-compose up -d
-        echo "Update complete"
+        shift
+        if [ -f "./update.sh" ]; then
+            sudo ./update.sh "$@"
+        else
+            echo "Update script not found. Using basic update method..."
+            echo "Pulling latest changes..."
+            git pull
+            echo "Rebuilding containers..."
+            docker-compose build
+            echo "Restarting services..."
+            docker-compose up -d
+            echo "Update complete"
+        fi
+        ;;
+    version)
+        cd $INSTALL_DIR
+        if [ -f "VERSION" ]; then
+            echo "FireISP version: $(cat VERSION)"
+        else
+            echo "Version file not found"
+        fi
         ;;
     shell)
         cd $INSTALL_DIR

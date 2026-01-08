@@ -16,10 +16,18 @@ frontend/build/
 logs/
 *.log
 npm-debug.log*
+update.log
 
 # Database
 *.db
 *.sqlite
+
+# Backups
+backups/
+backup_*.sql
+*.tar.gz
+.last_backup
+.rollback_info
 
 # Uploads
 uploads/*
