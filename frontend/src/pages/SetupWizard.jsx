@@ -18,8 +18,11 @@ function SetupWizard({ onComplete }) {
 
   const [sslConfig, setSslConfig] = useState({
     enabled: false,
+    method: 'letsencrypt', // 'letsencrypt' or 'manual'
     certificate: '',
     privateKey: '',
+    domain: '',
+    email: '',
   });
 
   const [companyInfo, setCompanyInfo] = useState({
@@ -191,24 +194,77 @@ function SetupWizard({ onComplete }) {
             {sslConfig.enabled && (
               <>
                 <div className="form-group">
-                  <label className="form-label">SSL Certificate</label>
-                  <textarea
-                    rows="6"
-                    placeholder="Paste your SSL certificate (PEM format)"
-                    value={sslConfig.certificate}
-                    onChange={(e) => setSslConfig({ ...sslConfig, certificate: e.target.value })}
-                  />
+                  <label className="form-label">SSL Method</label>
+                  <select
+                    value={sslConfig.method}
+                    onChange={(e) => setSslConfig({ ...sslConfig, method: e.target.value })}
+                    className="form-select"
+                  >
+                    <option value="letsencrypt">Let's Encrypt (Automatic)</option>
+                    <option value="manual">Manual Certificate Upload</option>
+                  </select>
+                  <p className="form-help">
+                    {sslConfig.method === 'letsencrypt' 
+                      ? "Let's Encrypt will automatically obtain and configure a free SSL certificate for your domain."
+                      : "Upload your own SSL certificate and private key in PEM format."}
+                  </p>
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label">Private Key</label>
-                  <textarea
-                    rows="6"
-                    placeholder="Paste your private key (PEM format)"
-                    value={sslConfig.privateKey}
-                    onChange={(e) => setSslConfig({ ...sslConfig, privateKey: e.target.value })}
-                  />
-                </div>
+                {sslConfig.method === 'letsencrypt' ? (
+                  <>
+                    <div className="form-group">
+                      <label className="form-label">Domain Name</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="example.com"
+                        value={sslConfig.domain}
+                        onChange={(e) => setSslConfig({ ...sslConfig, domain: e.target.value })}
+                      />
+                      <p className="form-help">
+                        Enter your domain name (e.g., fireisp.example.com). Make sure this domain points to this server's IP address.
+                      </p>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="admin@example.com"
+                        value={sslConfig.email}
+                        onChange={(e) => setSslConfig({ ...sslConfig, email: e.target.value })}
+                      />
+                      <p className="form-help">
+                        Email for Let's Encrypt certificate expiration notifications.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label className="form-label">SSL Certificate</label>
+                      <textarea
+                        rows="6"
+                        required
+                        placeholder="Paste your SSL certificate (PEM format)"
+                        value={sslConfig.certificate}
+                        onChange={(e) => setSslConfig({ ...sslConfig, certificate: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Private Key</label>
+                      <textarea
+                        rows="6"
+                        required
+                        placeholder="Paste your private key (PEM format)"
+                        value={sslConfig.privateKey}
+                        onChange={(e) => setSslConfig({ ...sslConfig, privateKey: e.target.value })}
+                      />
+                    </div>
+                  </>
+                )}
               </>
             )}
 
