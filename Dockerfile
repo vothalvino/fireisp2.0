@@ -18,10 +18,10 @@ CMD ["node", "server.js"]
 FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 COPY frontend/package*.json ./
-# Try npm ci first, fallback to npm install if lockfile doesn't work
-RUN npm ci || npm install
+# Install dependencies with explicit flags to avoid hanging
+RUN npm install --legacy-peer-deps --no-audit --no-fund
 COPY frontend/ ./
-# Build frontend - if dist already exists from local build, this will rebuild it
+# Build frontend
 RUN npm run build
 
 # Frontend nginx stage
