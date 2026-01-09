@@ -6,8 +6,10 @@ function Services() {
   const [services, setServices] = useState([]);
   const [plans, setPlans] = useState([]);
   const [clients, setClients] = useState([]);
+  const [serviceTypes, setServiceTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showPlanForm, setShowPlanForm] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [formData, setFormData] = useState({
     clientId: '',
@@ -20,6 +22,15 @@ function Services() {
     expirationDate: '',
     notes: ''
   });
+  const [planFormData, setPlanFormData] = useState({
+    serviceTypeId: '',
+    name: '',
+    description: '',
+    downloadSpeed: '',
+    uploadSpeed: '',
+    price: '',
+    billingCycle: 'monthly'
+  });
 
   useEffect(() => {
     loadData();
@@ -27,14 +38,16 @@ function Services() {
 
   const loadData = async () => {
     try {
-      const [servicesRes, plansRes, clientsRes] = await Promise.all([
+      const [servicesRes, plansRes, clientsRes, typesRes] = await Promise.all([
         serviceService.getClientServices(),
         serviceService.getPlans(),
-        clientService.getAll({ limit: 1000 })
+        clientService.getAll({ limit: 1000 }),
+        serviceService.getTypes()
       ]);
       setServices(servicesRes.data);
       setPlans(plansRes.data);
       setClients(clientsRes.data.clients);
+      setServiceTypes(typesRes.data);
     } catch (error) {
       console.error('Failed to load services:', error);
     } finally {
@@ -45,6 +58,26 @@ function Services() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePlanInputChange = (e) => {
+    const { name, value } = e.target;
+    setPlanFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePlanSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      await serviceService.createPlan(planFormData);
+      alert('Service plan created successfully');
+      setShowPlanForm(false);
+      resetPlanForm();
+      loadData();
+    } catch (error) {
+      console.error('Failed to create service plan:', error);
+      alert(error.response?.data?.error?.message || 'Failed to create service plan');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -112,8 +145,144 @@ function Services() {
     });
   };
 
+  const resetPlanForm = () => {
+    setPlanFormData({
+      serviceTypeId: '',
+      name: '',
+      description: '',
+      downloadSpeed: '',
+      uploadSpeed: '',
+      price: '',
+      billingCycle: 'monthly'
+    });
+  };
+
   if (loading) {
     return <div className="loading-container"><div className="spinner"></div></div>;
+  }
+
+  if (showPlanForm) {
+    return (
+      <div>
+        <div className="page-header">
+          <h1><Package size={32} /> Create Service Plan</h1>
+          <button className="btn" onClick={() => {
+            setShowPlanForm(false);
+            resetPlanForm();
+          }}>Cancel</button>
+        </div>
+
+        <div className="card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+          <form onSubmit={handlePlanSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label>Service Type *</label>
+                <select
+                  name="serviceTypeId"
+                  value={planFormData.serviceTypeId}
+                  onChange={handlePlanInputChange}
+                  required
+                >
+                  <option value="">Select Service Type</option>
+                  {serviceTypes.map(type => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label>Plan Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={planFormData.name}
+                  onChange={handlePlanInputChange}
+                  required
+                  placeholder="e.g., Basic 10Mbps"
+                />
+              </div>
+              
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label>Description</label>
+                <textarea
+                  name="description"
+                  value={planFormData.description}
+                  onChange={handlePlanInputChange}
+                  rows="3"
+                  placeholder="Plan description..."
+                />
+              </div>
+              
+              <div>
+                <label>Download Speed *</label>
+                <input
+                  type="text"
+                  name="downloadSpeed"
+                  value={planFormData.downloadSpeed}
+                  onChange={handlePlanInputChange}
+                  required
+                  placeholder="e.g., 10 Mbps"
+                />
+              </div>
+              
+              <div>
+                <label>Upload Speed *</label>
+                <input
+                  type="text"
+                  name="uploadSpeed"
+                  value={planFormData.uploadSpeed}
+                  onChange={handlePlanInputChange}
+                  required
+                  placeholder="e.g., 5 Mbps"
+                />
+              </div>
+              
+              <div>
+                <label>Price *</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="price"
+                  value={planFormData.price}
+                  onChange={handlePlanInputChange}
+                  required
+                  placeholder="e.g., 29.99"
+                />
+              </div>
+              
+              <div>
+                <label>Billing Cycle *</label>
+                <select
+                  name="billingCycle"
+                  value={planFormData.billingCycle}
+                  onChange={handlePlanInputChange}
+                  required
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="quarterly">Quarterly</option>
+                  <option value="semi-annual">Semi-Annual</option>
+                  <option value="annual">Annual</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn" onClick={() => {
+                setShowPlanForm(false);
+                resetPlanForm();
+              }}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">
+                Create Plan
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
   }
 
   if (showForm) {
@@ -273,7 +442,12 @@ function Services() {
       </div>
 
       <div className="card mb-4">
-        <h3>Service Plans ({plans.length})</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h3>Service Plans ({plans.length})</h3>
+          <button className="btn btn-primary" onClick={() => setShowPlanForm(true)}>
+            <Plus size={20} /> Add Plan
+          </button>
+        </div>
         {plans.length > 0 ? (
           <table>
             <thead>
