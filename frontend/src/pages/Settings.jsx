@@ -37,7 +37,7 @@ function Settings() {
     
     try {
       const settingsArray = settingKeys
-        .filter(key => settings[key] !== undefined)
+        .filter(key => key in settings)
         .map(key => ({
           key,
           value: settings[key]
