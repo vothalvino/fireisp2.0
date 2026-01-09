@@ -30,7 +30,7 @@ function SetupWizard({ onComplete }) {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const response = await setupService.getStatus();
+        const response = await setupService.checkStatus();
         setSetupStatus(response.data);
       } catch (error) {
         console.error('Failed to check setup status:', error);
@@ -231,16 +231,21 @@ function SetupWizard({ onComplete }) {
               <>
                 <div className="form-group">
                   <label className="form-label">SSL Method</label>
-                  <select
-                    value={sslConfig.method}
-                    onChange={(e) => setSslConfig({ ...sslConfig, method: e.target.value })}
-                    className="form-select"
-                  >
-                    <option value="letsencrypt" disabled={setupStatus && !setupStatus.letsEncryptAvailable}>
-                      Let's Encrypt (Automatic){setupStatus && !setupStatus.letsEncryptAvailable ? ' - Not Available' : ''}
-                    </option>
-                    <option value="manual">Manual Certificate Upload</option>
-                  </select>
+                  {(() => {
+                    const isLetsEncryptUnavailable = setupStatus && !setupStatus.letsEncryptAvailable;
+                    return (
+                      <select
+                        value={sslConfig.method}
+                        onChange={(e) => setSslConfig({ ...sslConfig, method: e.target.value })}
+                        className="form-select"
+                      >
+                        <option value="letsencrypt" disabled={isLetsEncryptUnavailable}>
+                          Let's Encrypt (Automatic){isLetsEncryptUnavailable ? ' - Not Available' : ''}
+                        </option>
+                        <option value="manual">Manual Certificate Upload</option>
+                      </select>
+                    );
+                  })()}
                   <p className="form-help">
                     {sslConfig.method === 'letsencrypt' 
                       ? "Let's Encrypt will automatically obtain and configure a free SSL certificate for your domain."

@@ -315,6 +315,10 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 let errorMessage = 'Failed to obtain Let\'s Encrypt certificate. ';
                 let troubleshootingSteps = [];
                 
+                // Sanitize domain for safe display in error messages
+                // Only allow alphanumeric, dots, and hyphens
+                const safeDomain = domain.replace(/[^a-zA-Z0-9.-]/g, '');
+                
                 // Provide more helpful error messages for common issues
                 // Check for specific error patterns more carefully to avoid false positives
                 if (error.message && (error.message.toLowerCase().includes('dns resolution') || 
@@ -324,7 +328,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     troubleshootingSteps = [
                         'Verify your domain\'s DNS A record points to this server\'s public IP address',
                         'Wait 5-60 minutes for DNS propagation after making changes',
-                        'Test DNS with: nslookup ' + domain,
+                        `Test DNS with: nslookup ${safeDomain}`,
                         'Check DNS globally at https://dnschecker.org'
                     ];
                 } else if (error.message && (error.message.toLowerCase().includes('challenge') && 
@@ -334,7 +338,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                         'Ensure port 80 is open and accessible from the internet',
                         'Check firewall rules: sudo ufw allow 80/tcp',
                         'Verify no other service is using port 80',
-                        'Test accessibility at http://' + domain + '/.well-known/acme-challenge/'
+                        `Test accessibility at http://${safeDomain}/.well-known/acme-challenge/`
                     ];
                 } else if (error.message && error.message.toLowerCase().includes('rate limit')) {
                     errorMessage += 'Let\'s Encrypt rate limit reached.';
@@ -359,7 +363,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     troubleshootingSteps = [
                         'Check if server is behind NAT (configure port forwarding)',
                         'Verify hosting provider allows incoming HTTP/HTTPS',
-                        'Test connectivity: telnet ' + domain + ' 80',
+                        `Test connectivity: telnet ${safeDomain} 80`,
                         'Ensure no IP blocking by ISP or hosting provider'
                     ];
                 } else {
@@ -373,9 +377,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     ];
                 }
                 
-                const fullErrorMessage = errorMessage + '\n\nTroubleshooting steps:\n' + 
-                    troubleshootingSteps.map((step, i) => `${i + 1}. ${step}`).join('\n') +
-                    '\n\nYou can skip SSL setup for now and configure it later in the Settings page.';
+                const fullErrorMessage = `${errorMessage}\n\nTroubleshooting steps:\n${troubleshootingSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}\n\nYou can skip SSL setup for now and configure it later in the Settings page.`;
                 
                 return res.status(500).json({ 
                     error: { 
