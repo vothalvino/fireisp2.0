@@ -274,12 +274,12 @@ CREATE TABLE ticket_comments (
 );
 
 -- Indexes for better performance
-CREATE INDEX idx_tickets_client_id ON tickets(client_id);
-CREATE INDEX idx_tickets_status ON tickets(status);
-CREATE INDEX idx_tickets_priority ON tickets(priority);
-CREATE INDEX idx_tickets_assigned_to ON tickets(assigned_to);
-CREATE INDEX idx_tickets_created_at ON tickets(created_at);
-CREATE INDEX idx_ticket_comments_ticket_id ON ticket_comments(ticket_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_client_id ON tickets(client_id);
+CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
+CREATE INDEX IF NOT EXISTS idx_tickets_priority ON tickets(priority);
+CREATE INDEX IF NOT EXISTS idx_tickets_assigned_to ON tickets(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at);
+CREATE INDEX IF NOT EXISTS idx_ticket_comments_ticket_id ON ticket_comments(ticket_id);
 
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
