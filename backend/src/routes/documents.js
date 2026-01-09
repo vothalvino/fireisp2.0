@@ -13,7 +13,7 @@ router.use(authMiddleware);
 const storage = multer.diskStorage({
     destination: async (req, file, cb) => {
         const clientId = req.params.clientId;
-        const uploadPath = path.join(__dirname, '../../uploads/clients', clientId);
+        const uploadPath = path.join(__dirname, '../../../uploads/clients', clientId);
         
         // Create directory if it doesn't exist
         try {
@@ -141,7 +141,7 @@ router.get('/:clientId/download/:documentId', async (req, res) => {
         }
 
         const document = result.rows[0];
-        const filePath = path.join(__dirname, '../../uploads', document.file_path);
+        const filePath = path.join(__dirname, '../../../uploads', document.file_path);
 
         // Check if file exists before attempting download
         try {
@@ -172,7 +172,7 @@ router.delete('/:clientId/:documentId', async (req, res) => {
         }
 
         const document = result.rows[0];
-        const filePath = path.join(__dirname, '../../uploads', document.file_path);
+        const filePath = path.join(__dirname, '../../../uploads', document.file_path);
 
         // Delete from database first
         await db.query('DELETE FROM client_documents WHERE id = $1', [documentId]);
