@@ -39,7 +39,7 @@ function Payments() {
       }, 0);
     
     const currentAmount = parseFloat(formData.amount);
-    if (!formData.amount || currentAmount === 0 || isNaN(currentAmount)) {
+    if (isNaN(currentAmount) || currentAmount === 0) {
       setFormData(prev => ({ ...prev, amount: total.toFixed(2) }));
     }
   }, [selectedInvoices]);
@@ -145,10 +145,10 @@ function Payments() {
     const invoiceAllocations = Object.keys(selectedInvoices)
       .filter(id => selectedInvoices[id].selected)
       .map(id => {
-        const amount = parseFloat(selectedInvoices[id].amount || 0);
+        const amount = parseFloat(selectedInvoices[id].amount) || 0;
         return {
           invoiceId: id,
-          amount: isNaN(amount) ? 0 : amount
+          amount: amount
         };
       })
       .filter(allocation => allocation.amount > 0); // Only include valid positive amounts

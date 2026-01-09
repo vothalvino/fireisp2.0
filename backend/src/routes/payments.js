@@ -96,7 +96,7 @@ router.post('/', async (req, res) => {
             for (const allocation of invoiceAllocations) {
                 const allocationAmount = parseFloat(allocation.amount);
                 
-                // Skip invalid or non-positive amounts
+                // Skip NaN or non-positive amounts
                 if (isNaN(allocationAmount) || allocationAmount <= 0) {
                     continue;
                 }
