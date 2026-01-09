@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Service plan creation UI in Services page
+  - "Add Plan" button in Service Plans section
+  - Complete form for creating new service plans
+  - Service type selection dropdown
+  - Plan details: name, description, speeds, price, billing cycle
+  - Form validation and error handling
 - Comprehensive update system for easy application updates
   - `update.sh` script with automatic backup, migration, and rollback capabilities
   - Version checking and health verification
@@ -33,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced `.gitignore` to exclude backup files and update artifacts
 
 ### Fixed
+- Service plan management workflow - users can now create plans through the UI
+  - Previously, users could not add services because plans had to exist first
+  - Added UI for creating service plans before creating client services
+  - Resolves chicken-and-egg problem in service management workflow
 - Fixed nginx proxy configuration causing HTTP/HTTPS connection issues
   - Changed `proxy_pass` from `http://backend:3000/` to `http://backend:3000/api/`
   - Ensures API requests properly route to backend with correct path
