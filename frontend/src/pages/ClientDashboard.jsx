@@ -6,6 +6,28 @@ import {
   Ticket, Radio, DollarSign, Calendar, AlertCircle, Upload, Download, Trash2, FolderOpen, Plus
 } from 'lucide-react';
 
+// Initial form states
+const getInitialServiceFormData = (clientId = '') => ({
+  clientId,
+  servicePlanId: '',
+  username: '',
+  password: '',
+  ipAddress: '',
+  macAddress: '',
+  activationDate: new Date().toISOString().split('T')[0],
+  expirationDate: '',
+  notes: ''
+});
+
+const getInitialTicketFormData = (clientId = '') => ({
+  clientId,
+  title: '',
+  description: '',
+  type: 'support',
+  priority: 'medium',
+  assignedTo: ''
+});
+
 function ClientDashboard() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -22,25 +44,8 @@ function ClientDashboard() {
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [plans, setPlans] = useState([]);
   const [users, setUsers] = useState([]);
-  const [serviceFormData, setServiceFormData] = useState({
-    clientId: id,
-    servicePlanId: '',
-    username: '',
-    password: '',
-    ipAddress: '',
-    macAddress: '',
-    activationDate: new Date().toISOString().split('T')[0],
-    expirationDate: '',
-    notes: ''
-  });
-  const [ticketFormData, setTicketFormData] = useState({
-    clientId: id,
-    title: '',
-    description: '',
-    type: 'support',
-    priority: 'medium',
-    assignedTo: ''
-  });
+  const [serviceFormData, setServiceFormData] = useState(getInitialServiceFormData());
+  const [ticketFormData, setTicketFormData] = useState(getInitialTicketFormData());
 
   const loadClientData = async () => {
     try {
@@ -75,6 +80,9 @@ function ClientDashboard() {
   useEffect(() => {
     loadClientData();
     loadFormsData();
+    // Update clientId in forms when id changes
+    setServiceFormData(prev => ({ ...prev, clientId: id }));
+    setTicketFormData(prev => ({ ...prev, clientId: id }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -218,28 +226,11 @@ function ClientDashboard() {
   };
 
   const resetServiceForm = () => {
-    setServiceFormData({
-      clientId: id,
-      servicePlanId: '',
-      username: '',
-      password: '',
-      ipAddress: '',
-      macAddress: '',
-      activationDate: new Date().toISOString().split('T')[0],
-      expirationDate: '',
-      notes: ''
-    });
+    setServiceFormData(getInitialServiceFormData(id));
   };
 
   const resetTicketForm = () => {
-    setTicketFormData({
-      clientId: id,
-      title: '',
-      description: '',
-      type: 'support',
-      priority: 'medium',
-      assignedTo: ''
-    });
+    setTicketFormData(getInitialTicketFormData(id));
   };
 
   if (loading) {
