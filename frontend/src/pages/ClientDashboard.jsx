@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { clientService, invoiceService, ticketService, radiusService } from '../services/api';
 import { 
   ArrowLeft, User, Mail, Phone, MapPin, FileText, Package, 
-  Ticket, Radio, DollarSign, Calendar, AlertCircle, CheckCircle2
+  Ticket, Radio, DollarSign, Calendar, AlertCircle
 } from 'lucide-react';
 
 function ClientDashboard() {
@@ -43,7 +43,6 @@ function ClientDashboard() {
       setSessions(clientSessions);
     } catch (error) {
       console.error('Failed to load client data:', error);
-      alert('Failed to load client information');
     } finally {
       setLoading(false);
     }

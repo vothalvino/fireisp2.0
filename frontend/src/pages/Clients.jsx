@@ -340,10 +340,8 @@ function Clients() {
               {clients.map((client) => (
                 <tr 
                   key={client.id}
+                  className="clickable-row"
                   onClick={() => navigate(`/clients/${client.id}`)}
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                 >
                   <td>{client.client_code}</td>
                   <td>
