@@ -167,7 +167,7 @@ function Clients() {
               </div>
               
               <div>
-                <label>Company Name *</label>
+                <label>{formData.clientType === 'personal' ? 'Full Name *' : 'Company Name *'}</label>
                 <input
                   type="text"
                   name="companyName"
