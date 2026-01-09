@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { clientService, invoiceService, ticketService, radiusService, documentService } from '../services/api';
+import { clientService, invoiceService, ticketService, radiusService, documentService, serviceService, userService } from '../services/api';
 import { 
   ArrowLeft, User, Mail, Phone, MapPin, FileText, Package, 
-  Ticket, Radio, DollarSign, Calendar, AlertCircle, Upload, Download, Trash2, FolderOpen
+  Ticket, Radio, DollarSign, Calendar, AlertCircle, Upload, Download, Trash2, FolderOpen, Plus
 } from 'lucide-react';
 
 function ClientDashboard() {
@@ -18,6 +18,29 @@ function ClientDashboard() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [showServiceForm, setShowServiceForm] = useState(false);
+  const [showTicketForm, setShowTicketForm] = useState(false);
+  const [plans, setPlans] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [serviceFormData, setServiceFormData] = useState({
+    clientId: id,
+    servicePlanId: '',
+    username: '',
+    password: '',
+    ipAddress: '',
+    macAddress: '',
+    activationDate: new Date().toISOString().split('T')[0],
+    expirationDate: '',
+    notes: ''
+  });
+  const [ticketFormData, setTicketFormData] = useState({
+    clientId: id,
+    title: '',
+    description: '',
+    type: 'support',
+    priority: 'medium',
+    assignedTo: ''
+  });
 
   const loadClientData = async () => {
     try {
@@ -51,8 +74,22 @@ function ClientDashboard() {
 
   useEffect(() => {
     loadClientData();
+    loadFormsData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  const loadFormsData = async () => {
+    try {
+      const [plansRes, usersRes] = await Promise.all([
+        serviceService.getPlans(),
+        userService.getAll()
+      ]);
+      setPlans(plansRes.data || []);
+      setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
+    } catch (error) {
+      console.error('Failed to load forms data:', error);
+    }
+  };
 
   const formatBytes = (bytes) => {
     if (!bytes || bytes === 0) return '0 Bytes';
@@ -136,6 +173,73 @@ function ClientDashboard() {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const handleServiceInputChange = (e) => {
+    const { name, value } = e.target;
+    setServiceFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTicketInputChange = (e) => {
+    const { name, value } = e.target;
+    setTicketFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleServiceSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await serviceService.createClientService(serviceFormData);
+      alert('Service created successfully!');
+      setShowServiceForm(false);
+      resetServiceForm();
+      loadClientData();
+    } catch (error) {
+      console.error('Failed to create service:', error);
+      alert(error.response?.data?.error?.message || 'Failed to create service');
+    }
+  };
+
+  const handleTicketSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const cleanedData = {
+        ...ticketFormData,
+        assignedTo: ticketFormData.assignedTo || null,
+      };
+      await ticketService.create(cleanedData);
+      alert('Ticket created successfully!');
+      setShowTicketForm(false);
+      resetTicketForm();
+      loadClientData();
+    } catch (error) {
+      console.error('Failed to create ticket:', error);
+      alert(error.response?.data?.error?.message || 'Failed to create ticket');
+    }
+  };
+
+  const resetServiceForm = () => {
+    setServiceFormData({
+      clientId: id,
+      servicePlanId: '',
+      username: '',
+      password: '',
+      ipAddress: '',
+      macAddress: '',
+      activationDate: new Date().toISOString().split('T')[0],
+      expirationDate: '',
+      notes: ''
+    });
+  };
+
+  const resetTicketForm = () => {
+    setTicketFormData({
+      clientId: id,
+      title: '',
+      description: '',
+      type: 'support',
+      priority: 'medium',
+      assignedTo: ''
+    });
   };
 
   if (loading) {
@@ -276,9 +380,18 @@ function ClientDashboard() {
 
               {/* Active Services */}
               <div className="card">
-                <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Package size={20} /> Active Services ({services.length})
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                    <Package size={20} /> Active Services ({services.length})
+                  </h3>
+                  <button 
+                    onClick={() => setShowServiceForm(true)} 
+                    className="btn btn-primary"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    <Plus size={16} /> Add Service
+                  </button>
+                </div>
                 {services.length > 0 ? (
                   <div style={{ display: 'grid', gap: '10px' }}>
                     {services.slice(0, 5).map((service) => (
@@ -395,9 +508,18 @@ function ClientDashboard() {
 
               {/* Recent Tickets */}
               <div className="card">
-                <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <Ticket size={20} /> Recent Tickets
-                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                  <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+                    <Ticket size={20} /> Recent Tickets
+                  </h3>
+                  <button 
+                    onClick={() => setShowTicketForm(true)} 
+                    className="btn btn-primary"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    <Plus size={16} /> Add Ticket
+                  </button>
+                </div>
                 {tickets.length > 0 ? (
                   <div style={{ display: 'grid', gap: '10px' }}>
                     {tickets.map((ticket) => (
@@ -620,6 +742,283 @@ function ClientDashboard() {
 
       {/* Tab Content */}
       {renderTabContent()}
+
+      {/* Service Creation Modal */}
+      {showServiceForm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0' }}>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Package size={24} /> Add New Service
+              </h2>
+            </div>
+            <form onSubmit={handleServiceSubmit}>
+              <div style={{ padding: '20px' }}>
+                <div className="form-group">
+                  <label>Service Plan *</label>
+                  <select
+                    name="servicePlanId"
+                    value={serviceFormData.servicePlanId}
+                    onChange={handleServiceInputChange}
+                    required
+                    className="form-input"
+                  >
+                    <option value="">Select a plan</option>
+                    {plans.map(plan => (
+                      <option key={plan.id} value={plan.id}>
+                        {plan.name} - ${plan.price}/{plan.billing_cycle}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Username *</label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={serviceFormData.username}
+                    onChange={handleServiceInputChange}
+                    required
+                    className="form-input"
+                    placeholder="Service username"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Password *</label>
+                  <input
+                    type="text"
+                    name="password"
+                    value={serviceFormData.password}
+                    onChange={handleServiceInputChange}
+                    required
+                    className="form-input"
+                    placeholder="Service password"
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>IP Address</label>
+                    <input
+                      type="text"
+                      name="ipAddress"
+                      value={serviceFormData.ipAddress}
+                      onChange={handleServiceInputChange}
+                      className="form-input"
+                      placeholder="e.g., 192.168.1.100"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>MAC Address</label>
+                    <input
+                      type="text"
+                      name="macAddress"
+                      value={serviceFormData.macAddress}
+                      onChange={handleServiceInputChange}
+                      className="form-input"
+                      placeholder="e.g., 00:11:22:33:44:55"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Activation Date *</label>
+                    <input
+                      type="date"
+                      name="activationDate"
+                      value={serviceFormData.activationDate}
+                      onChange={handleServiceInputChange}
+                      required
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Expiration Date</label>
+                    <input
+                      type="date"
+                      name="expirationDate"
+                      value={serviceFormData.expirationDate}
+                      onChange={handleServiceInputChange}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Notes</label>
+                  <textarea
+                    name="notes"
+                    value={serviceFormData.notes}
+                    onChange={handleServiceInputChange}
+                    className="form-input"
+                    rows="3"
+                    placeholder="Additional notes"
+                  />
+                </div>
+              </div>
+
+              <div style={{ padding: '20px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  onClick={() => { setShowServiceForm(false); resetServiceForm(); }} 
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Create Service
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Ticket Creation Modal */}
+      {showTicketForm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+          }}>
+            <div style={{ padding: '20px', borderBottom: '1px solid #e2e8f0' }}>
+              <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Ticket size={24} /> Add New Ticket
+              </h2>
+            </div>
+            <form onSubmit={handleTicketSubmit}>
+              <div style={{ padding: '20px' }}>
+                <div className="form-group">
+                  <label>Title *</label>
+                  <input
+                    type="text"
+                    name="title"
+                    value={ticketFormData.title}
+                    onChange={handleTicketInputChange}
+                    required
+                    className="form-input"
+                    placeholder="Brief description of the issue"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Description</label>
+                  <textarea
+                    name="description"
+                    value={ticketFormData.description}
+                    onChange={handleTicketInputChange}
+                    className="form-input"
+                    rows="5"
+                    placeholder="Detailed description of the issue"
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Type</label>
+                    <select
+                      name="type"
+                      value={ticketFormData.type}
+                      onChange={handleTicketInputChange}
+                      className="form-input"
+                    >
+                      <option value="support">Support</option>
+                      <option value="maintenance">Maintenance</option>
+                      <option value="installation">Installation</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Priority</label>
+                    <select
+                      name="priority"
+                      value={ticketFormData.priority}
+                      onChange={handleTicketInputChange}
+                      className="form-input"
+                    >
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="urgent">Urgent</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Assign To</label>
+                  <select
+                    name="assignedTo"
+                    value={ticketFormData.assignedTo}
+                    onChange={handleTicketInputChange}
+                    className="form-input"
+                  >
+                    <option value="">-- Unassigned --</option>
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>{user.username}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ padding: '20px', borderTop: '1px solid #e2e8f0', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  onClick={() => { setShowTicketForm(false); resetTicketForm(); }} 
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  Create Ticket
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
