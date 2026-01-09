@@ -337,7 +337,7 @@ function Clients() {
                 <tr key={client.id}>
                   <td>{client.client_code}</td>
                   <td>
-                    <span className={`badge badge-${client.client_type === 'company' ? 'info' : 'secondary'}`}>
+                    <span className={`badge badge-${(client.client_type || 'company') === 'company' ? 'info' : 'secondary'}`}>
                       {client.client_type || 'company'}
                     </span>
                   </td>

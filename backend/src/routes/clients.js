@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../utils/database');
 const { authMiddleware } = require('../middleware/auth');
+const { DEFAULT_CLIENT_TYPE } = require('../utils/constants');
 
 // All routes require authentication
 router.use(authMiddleware);
@@ -116,7 +117,7 @@ router.post('/', async (req, res) => {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING *`,
             [clientCode, companyName, contactPerson, email, phone, mobile,
-             address, city, state, postalCode, country, taxId, notes, req.user.id, clientType || 'company']
+             address, city, state, postalCode, country, taxId, notes, req.user.id, clientType || DEFAULT_CLIENT_TYPE]
         );
         
         res.status(201).json(result.rows[0]);
@@ -145,7 +146,7 @@ router.put('/:id', async (req, res) => {
             WHERE id = $16
             RETURNING *`,
             [clientCode, companyName, contactPerson, email, phone, mobile,
-             address, city, state, postalCode, country, taxId, status, notes, clientType || 'company', req.params.id]
+             address, city, state, postalCode, country, taxId, status, notes, clientType || DEFAULT_CLIENT_TYPE, req.params.id]
         );
         
         if (result.rows.length === 0) {
