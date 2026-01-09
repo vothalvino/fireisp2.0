@@ -334,11 +334,13 @@ If you prefer to update manually:
 
 ```bash
 cd /opt/fireisp
-./fireisp backup          # Create backup first
-git pull                  # Pull latest changes
-docker-compose build      # Rebuild containers
-docker-compose up -d      # Restart services
+./fireisp backup                    # Create backup first
+git pull                            # Pull latest changes
+docker-compose build --no-cache     # Rebuild containers with latest dependencies
+docker-compose up -d                # Restart services
 ```
+
+**Important**: Always use `--no-cache` flag when building to ensure all dependencies are properly installed.
 
 ### Rollback
 
@@ -385,6 +387,8 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
 - **[MIKROTIK.md](MIKROTIK.md)** - Mikrotik integration guide
+- **[QUICK_FIX_LETSENCRYPT.md](QUICK_FIX_LETSENCRYPT.md)** - 🚀 **Quick 3-command fix for "Let's Encrypt still failing"**
+- **[LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)** - Detailed rebuild instructions
 - **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** - Let's Encrypt troubleshooting and debugging
 - **[LETSENCRYPT_TESTING.md](LETSENCRYPT_TESTING.md)** - Let's Encrypt integration testing guide
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
@@ -394,8 +398,26 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 
 ### Let's Encrypt SSL Certificate Issues
 
-If you're having trouble configuring Let's Encrypt SSL certificates, see the comprehensive **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** guide which covers:
+If you're having trouble configuring Let's Encrypt SSL certificates, **first rebuild your Docker containers** to ensure all dependencies are current:
 
+```bash
+cd /opt/fireisp
+docker compose build --no-cache backend
+docker compose up -d
+```
+
+Then verify acme-client is installed:
+```bash
+docker compose logs backend | grep acme
+```
+
+You should see: `[System Health] acme-client vX.X.X is available`
+
+**For detailed rebuild instructions, see [LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)**
+
+See the comprehensive **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** guide which covers:
+
+- Docker container rebuild instructions
 - Prerequisites checklist (domain, DNS, ports, firewall)
 - Common error messages and solutions
 - Step-by-step debugging procedures
@@ -403,6 +425,8 @@ If you're having trouble configuring Let's Encrypt SSL certificates, see the com
 - Testing and validation tools
 
 **Quick checklist before attempting Let's Encrypt:**
+- [ ] Docker containers rebuilt with latest dependencies
+- [ ] acme-client package is installed (check logs)
 - [ ] Domain is registered and DNS A record points to server's public IP
 - [ ] Port 80 is open and accessible from the internet
 - [ ] Port 443 is open for HTTPS traffic

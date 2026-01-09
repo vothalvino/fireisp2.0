@@ -131,6 +131,13 @@ cd /opt/fireisp
 sudo ./update.sh
 ```
 
+**IMPORTANT**: After updating, always rebuild the Docker containers to ensure all dependencies are current:
+```bash
+cd /opt/fireisp
+docker compose build --no-cache
+docker compose up -d
+```
+
 For detailed update instructions, see [UPDATE.md](UPDATE.md)
 
 ### Check Version
@@ -161,9 +168,20 @@ radtest username password YOUR_FIREISP_IP 0 YOUR_RADIUS_SECRET
 
 ### Let's Encrypt SSL Issues?
 
+**First, ensure Docker containers are built with latest dependencies:**
+```bash
+cd /opt/fireisp
+docker compose build --no-cache backend
+docker compose up -d
+docker compose logs backend | grep acme
+```
+
+**For detailed rebuild instructions, see [LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)**
+
 See the comprehensive **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** guide.
 
 Quick checks:
+- Docker containers rebuilt with acme-client package
 - Domain DNS A record points to server IP
 - Port 80 is accessible from internet
 - Firewall allows ports 80 and 443

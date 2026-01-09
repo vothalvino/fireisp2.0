@@ -2,29 +2,85 @@
 
 This guide helps diagnose and fix common issues when configuring Let's Encrypt SSL certificates in FireISP.
 
+## IMPORTANT: First Step
+
+**If you recently updated FireISP or are experiencing Let's Encrypt failures, rebuild your Docker containers first:**
+
+```bash
+cd /opt/fireisp  # Or your installation directory
+docker compose build --no-cache backend
+docker compose up -d
+```
+
+This ensures the `acme-client` package is properly installed. Check the backend logs after restart:
+
+```bash
+docker compose logs backend | grep -i acme
+```
+
+You should see: `[System Health] acme-client vX.X.X is available - Let's Encrypt functionality enabled`
+
+If you see a WARNING message instead, the acme-client is not installed and Let's Encrypt will not work.
+
+**For detailed rebuild instructions, see [LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)**
+
 ## Prerequisites Checklist
 
 Before attempting Let's Encrypt configuration, ensure ALL of the following are met:
 
-### 1. Domain Configuration
+### 1. Docker Container Status
+- [ ] Docker containers have been built/rebuilt recently
+- [ ] Backend logs show acme-client is available
+- [ ] No error messages about missing packages on startup
+
+### 2. Domain Configuration
 - [ ] You have a registered domain name (e.g., `fireisp.example.com`)
 - [ ] DNS A record is configured and points to your server's **public IP address**
 - [ ] DNS has propagated (wait 5-60 minutes after DNS changes)
 - [ ] Domain resolves correctly from external networks
 
-### 2. Network Configuration
+### 3. Network Configuration
 - [ ] Server has a **public IP address** (not behind NAT without port forwarding)
 - [ ] Port 80 is **open and accessible** from the internet
 - [ ] Port 443 is **open and accessible** from the internet (for HTTPS)
 - [ ] Firewall allows incoming traffic on ports 80 and 443
 - [ ] No other service is using port 80 (Apache, other web servers, etc.)
 
-### 3. FireISP Configuration
+### 4. FireISP Configuration
 - [ ] FireISP is installed and running
 - [ ] You can access the setup wizard via HTTP
 - [ ] Setup is not yet completed (first-time setup)
 
 ## Common Issues and Solutions
+
+### Issue 0: "acme-client package is missing" or "Let's Encrypt functionality is not available"
+
+**Cause**: The Docker container was not built with the acme-client package, or you're running an old container image.
+
+**Solutions**:
+
+1. **Rebuild the backend container** (REQUIRED):
+   ```bash
+   cd /opt/fireisp
+   docker compose build --no-cache backend
+   docker compose up -d
+   ```
+
+2. **Verify the package is installed**:
+   ```bash
+   docker compose logs backend | grep -i "acme-client"
+   ```
+   
+   Expected output: `[System Health] acme-client v5.4.0 is available`
+
+3. **Check the setup status endpoint**:
+   ```bash
+   curl http://localhost/api/setup/status
+   ```
+   
+   Should include: `"letsEncryptAvailable": true`
+
+**For detailed rebuild instructions, see [LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)**
 
 ### Issue 1: "Challenge validation failed" or "Invalid response"
 
