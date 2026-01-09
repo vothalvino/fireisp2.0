@@ -20,6 +20,7 @@ CREATE TABLE users (
 CREATE TABLE clients (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     client_code VARCHAR(50) UNIQUE NOT NULL,
+    client_type VARCHAR(20) DEFAULT 'company' NOT NULL,
     company_name VARCHAR(255),
     contact_person VARCHAR(255),
     email VARCHAR(255),
@@ -35,7 +36,8 @@ CREATE TABLE clients (
     notes TEXT,
     created_by UUID REFERENCES users(id),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT check_client_type CHECK (client_type IN ('personal', 'company'))
 );
 
 -- Service types (Internet, IPTV, VoIP, etc.)
