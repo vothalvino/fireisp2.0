@@ -42,10 +42,10 @@ function Tickets() {
         ticketService.getStats()
       ]);
       
-      setTickets(ticketsRes.data.tickets);
-      setClients(clientsRes.data.clients);
-      setUsers(usersRes.data);
-      setStats(statsRes.data);
+      setTickets(ticketsRes.data.tickets || []);
+      setClients(clientsRes.data.clients || []);
+      setUsers(Array.isArray(usersRes.data) ? usersRes.data : []);
+      setStats(statsRes.data || {});
     } catch (error) {
       console.error('Failed to load data:', error);
       alert('Failed to load tickets');
@@ -62,7 +62,13 @@ function Tickets() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await ticketService.create(formData);
+      // Clean up form data: convert empty strings to null for optional UUID fields
+      const cleanedData = {
+        ...formData,
+        clientId: formData.clientId || null,
+        assignedTo: formData.assignedTo || null,
+      };
+      await ticketService.create(cleanedData);
       alert('Ticket created successfully');
       setShowForm(false);
       resetForm();
@@ -253,7 +259,7 @@ function Tickets() {
               <strong>Assigned To:</strong>
               <select
                 value={selectedTicket.assigned_to || ''}
-                onChange={(e) => handleUpdate(selectedTicket.id, { assignedTo: e.target.value })}
+                onChange={(e) => handleUpdate(selectedTicket.id, { assignedTo: e.target.value || null })}
                 className="form-input"
                 style={{ marginTop: '8px', maxWidth: '200px' }}
               >
