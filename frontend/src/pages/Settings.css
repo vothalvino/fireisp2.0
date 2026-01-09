@@ -1,0 +1,32 @@
+.settings-tabs {
+  display: flex;
+  border-bottom: 2px solid #e2e8f0;
+  overflow-x: auto;
+}
+
+.settings-tab-button {
+  padding: 1rem 1.5rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.settings-tab-button:hover {
+  color: #3b82f6;
+  background-color: #f8fafc;
+}
+
+.settings-tab-button.active {
+  color: #3b82f6;
+  border-bottom: 2px solid #3b82f6;
+}

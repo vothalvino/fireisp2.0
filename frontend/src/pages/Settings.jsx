@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { settingsService } from '../services/api';
 import { Settings as SettingsIcon, Save, Shield, AlertCircle } from 'lucide-react';
+import './Settings.css';
 
 function Settings() {
   const [settings, setSettings] = useState({});
@@ -8,6 +9,7 @@ function Settings() {
   const [savingSection, setSavingSection] = useState(null);
   const [certbotStatus, setCertbotStatus] = useState(null);
   const [certbotLoading, setCertbotLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('company');
 
   useEffect(() => {
     loadSettings();
@@ -97,6 +99,14 @@ function Settings() {
     return <div className="loading-container"><div className="spinner"></div></div>;
   }
 
+  const tabs = [
+    { id: 'company', label: 'Company', icon: SettingsIcon },
+    { id: 'application', label: 'Application', icon: SettingsIcon },
+    { id: 'ssl', label: 'SSL/Security', icon: Shield },
+    { id: 'radius', label: 'RADIUS', icon: SettingsIcon },
+    { id: 'email', label: 'Email', icon: SettingsIcon },
+  ];
+
   return (
     <div>
       <div className="page-header">
@@ -104,7 +114,27 @@ function Settings() {
         <p>Configure application settings</p>
       </div>
 
+      {/* Horizontal Tab Navigation */}
+      <div className="card" style={{ marginBottom: '20px', padding: '0' }}>
+        <div className="settings-tabs">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`settings-tab-button ${activeTab === tab.id ? 'active' : ''}`}
+              >
+                <Icon size={16} />
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Company Information Section */}
+      {activeTab === 'company' && (
       <form onSubmit={(e) => handleSectionSubmit(e, 'Company Information', ['company_name', 'company_email', 'company_phone', 'company_address'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>Company Information</h3>
@@ -156,8 +186,70 @@ function Settings() {
           </div>
         </div>
       </form>
+      )}
+
+      {/* Application Settings Section */}
+      {activeTab === 'application' && (
+      <form onSubmit={(e) => handleSectionSubmit(e, 'Application Settings', ['session_timeout', 'timezone', 'currency_symbol', 'date_format'])}>
+        <div className="card" style={{ marginBottom: '20px' }}>
+          <h3>Application Settings</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div>
+              <label>Session Timeout (minutes)</label>
+              <input
+                type="number"
+                value={settings.session_timeout || '60'}
+                onChange={(e) => handleInputChange('session_timeout', e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <label>Default Timezone</label>
+              <input
+                type="text"
+                value={settings.timezone || 'UTC'}
+                onChange={(e) => handleInputChange('timezone', e.target.value)}
+                placeholder="UTC"
+              />
+            </div>
+            
+            <div>
+              <label>Currency Symbol</label>
+              <input
+                type="text"
+                value={settings.currency_symbol || '$'}
+                onChange={(e) => handleInputChange('currency_symbol', e.target.value)}
+                placeholder="$"
+              />
+            </div>
+            
+            <div>
+              <label>Date Format</label>
+              <select
+                value={settings.date_format || 'YYYY-MM-DD'}
+                onChange={(e) => handleInputChange('date_format', e.target.value)}
+              >
+                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+              </select>
+            </div>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={savingSection === 'Application Settings'}
+            >
+              <Save size={20} /> {savingSection === 'Application Settings' ? 'Saving...' : 'Save Application Settings'}
+            </button>
+          </div>
+        </div>
+      </form>
+      )}
 
       {/* SSL Configuration Section */}
+      {activeTab === 'ssl' && (
       <form onSubmit={(e) => handleSectionSubmit(e, 'SSL Configuration', ['ssl_enabled', 'ssl_method', 'letsencrypt_domain', 'letsencrypt_email'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>SSL Configuration</h3>
@@ -322,8 +414,10 @@ function Settings() {
           </div>
         </div>
       </form>
+      )}
 
       {/* RADIUS Configuration Section */}
+      {activeTab === 'radius' && (
       <form onSubmit={(e) => handleSectionSubmit(e, 'RADIUS Configuration', ['radius_secret', 'radius_auth_port', 'radius_acct_port'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>RADIUS Configuration</h3>
@@ -367,66 +461,10 @@ function Settings() {
           </div>
         </div>
       </form>
-
-      {/* Application Settings Section */}
-      <form onSubmit={(e) => handleSectionSubmit(e, 'Application Settings', ['session_timeout', 'timezone', 'currency_symbol', 'date_format'])}>
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h3>Application Settings</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-            <div>
-              <label>Session Timeout (minutes)</label>
-              <input
-                type="number"
-                value={settings.session_timeout || '60'}
-                onChange={(e) => handleInputChange('session_timeout', e.target.value)}
-              />
-            </div>
-            
-            <div>
-              <label>Default Timezone</label>
-              <input
-                type="text"
-                value={settings.timezone || 'UTC'}
-                onChange={(e) => handleInputChange('timezone', e.target.value)}
-                placeholder="UTC"
-              />
-            </div>
-            
-            <div>
-              <label>Currency Symbol</label>
-              <input
-                type="text"
-                value={settings.currency_symbol || '$'}
-                onChange={(e) => handleInputChange('currency_symbol', e.target.value)}
-                placeholder="$"
-              />
-            </div>
-            
-            <div>
-              <label>Date Format</label>
-              <select
-                value={settings.date_format || 'YYYY-MM-DD'}
-                onChange={(e) => handleInputChange('date_format', e.target.value)}
-              >
-                <option value="YYYY-MM-DD">YYYY-MM-DD</option>
-                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-              </select>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={savingSection === 'Application Settings'}
-            >
-              <Save size={20} /> {savingSection === 'Application Settings' ? 'Saving...' : 'Save Application Settings'}
-            </button>
-          </div>
-        </div>
-      </form>
+      )}
 
       {/* Email Configuration Section */}
+      {activeTab === 'email' && (
       <form onSubmit={(e) => handleSectionSubmit(e, 'Email Configuration', ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'from_email', 'smtp_tls'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>Email Configuration</h3>
@@ -500,6 +538,7 @@ function Settings() {
           </div>
         </div>
       </form>
+      )}
     </div>
   );
 }
