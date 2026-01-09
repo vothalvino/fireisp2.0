@@ -35,7 +35,7 @@ function Tickets() {
   // Handle ticket navigation from ClientDashboard
   useEffect(() => {
     const loadTicketFromNavigation = async () => {
-      if (location.state?.ticketId && !loading && !loadingTicketFromNav) {
+      if (location.state?.ticketId && !loadingTicketFromNav) {
         setLoadingTicketFromNav(true);
         try {
           const response = await ticketService.getOne(location.state.ticketId);
@@ -52,7 +52,8 @@ function Tickets() {
     };
     
     loadTicketFromNavigation();
-  }, [location.state, loading, loadingTicketFromNav, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   const loadData = async () => {
     try {
