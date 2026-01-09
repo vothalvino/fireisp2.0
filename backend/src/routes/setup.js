@@ -312,26 +312,74 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     stack: error.stack
                 });
                 
-                let errorMessage = `Failed to obtain Let's Encrypt certificate: ${error.message}`;
+                let errorMessage = 'Failed to obtain Let\'s Encrypt certificate. ';
+                let troubleshootingSteps = [];
                 
                 // Provide more helpful error messages for common issues
                 // Check for specific error patterns more carefully to avoid false positives
                 if (error.message && (error.message.toLowerCase().includes('dns resolution') || 
                     error.message.toLowerCase().includes('nxdomain') ||
                     error.message.toLowerCase().includes('getaddrinfo'))) {
-                    errorMessage += '. Please ensure your domain\'s DNS A record points to this server\'s IP address.';
+                    errorMessage += 'DNS resolution failed.';
+                    troubleshootingSteps = [
+                        'Verify your domain\'s DNS A record points to this server\'s public IP address',
+                        'Wait 5-60 minutes for DNS propagation after making changes',
+                        'Test DNS with: nslookup ' + domain,
+                        'Check DNS globally at https://dnschecker.org'
+                    ];
                 } else if (error.message && (error.message.toLowerCase().includes('challenge') && 
                     (error.message.toLowerCase().includes('fail') || error.message.toLowerCase().includes('invalid')))) {
-                    errorMessage += '. Please ensure port 80 is accessible from the internet and not blocked by a firewall.';
+                    errorMessage += 'Challenge validation failed.';
+                    troubleshootingSteps = [
+                        'Ensure port 80 is open and accessible from the internet',
+                        'Check firewall rules: sudo ufw allow 80/tcp',
+                        'Verify no other service is using port 80',
+                        'Test accessibility at http://' + domain + '/.well-known/acme-challenge/'
+                    ];
                 } else if (error.message && error.message.toLowerCase().includes('rate limit')) {
-                    errorMessage += '. Let\'s Encrypt rate limit reached. Consider using staging mode or try again later.';
-                } else if (error.message && error.message.toLowerCase().includes('unauthorized')) {
-                    errorMessage += '. The certificate request was not authorized. This could be due to DNS issues or challenge validation failure.';
+                    errorMessage += 'Let\'s Encrypt rate limit reached.';
+                    troubleshootingSteps = [
+                        'Use staging mode for testing (set LETSENCRYPT_STAGING=true in .env)',
+                        'Wait for rate limit reset (weekly)',
+                        'Consider using a different subdomain',
+                        'See https://letsencrypt.org/docs/rate-limits/'
+                    ];
+                } else if (error.message && (error.message.toLowerCase().includes('unauthorized') ||
+                    error.message.toLowerCase().includes('403'))) {
+                    errorMessage += 'Authorization failed.';
+                    troubleshootingSteps = [
+                        'Verify DNS points to the correct IP address',
+                        'Ensure port 80 challenge responses are reachable',
+                        'Check for firewall or network blocking',
+                        'Review logs at: docker compose logs backend'
+                    ];
+                } else if (error.message && (error.message.toLowerCase().includes('timeout') ||
+                    error.message.toLowerCase().includes('connection refused'))) {
+                    errorMessage += 'Connection failed.';
+                    troubleshootingSteps = [
+                        'Check if server is behind NAT (configure port forwarding)',
+                        'Verify hosting provider allows incoming HTTP/HTTPS',
+                        'Test connectivity: telnet ' + domain + ' 80',
+                        'Ensure no IP blocking by ISP or hosting provider'
+                    ];
+                } else {
+                    errorMessage += error.message;
+                    troubleshootingSteps = [
+                        'Review the error message above for details',
+                        'Check logs: docker compose logs backend | tail -50',
+                        'Verify all prerequisites are met (see setup requirements)',
+                        'Consider using manual certificate upload or skipping SSL for now',
+                        'You can configure SSL later in Settings after setup'
+                    ];
                 }
+                
+                const fullErrorMessage = errorMessage + '\n\nTroubleshooting steps:\n' + 
+                    troubleshootingSteps.map((step, i) => `${i + 1}. ${step}`).join('\n') +
+                    '\n\nYou can skip SSL setup for now and configure it later in the Settings page.';
                 
                 return res.status(500).json({ 
                     error: { 
-                        message: errorMessage 
+                        message: fullErrorMessage
                     } 
                 });
             }

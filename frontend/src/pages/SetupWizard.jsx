@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { setupService } from '../services/api';
-import { CheckCircle, Lock, Settings } from 'lucide-react';
+import { CheckCircle, Lock, Settings, AlertCircle, Info } from 'lucide-react';
 import './SetupWizard.css';
 
 function SetupWizard({ onComplete }) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [setupStatus, setSetupStatus] = useState(null);
   
   const [rootUser, setRootUser] = useState({
     username: '',
@@ -24,6 +25,19 @@ function SetupWizard({ onComplete }) {
     domain: '',
     email: '',
   });
+
+  // Check setup status on component mount
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const response = await setupService.getStatus();
+        setSetupStatus(response.data);
+      } catch (error) {
+        console.error('Failed to check setup status:', error);
+      }
+    };
+    checkStatus();
+  }, []);
 
   const [companyInfo, setCompanyInfo] = useState({
     companyName: 'FireISP',
@@ -180,6 +194,28 @@ function SetupWizard({ onComplete }) {
             <h2><Lock size={24} /> SSL Configuration</h2>
             <p className="form-description">Configure HTTPS for secure connections (optional)</p>
             
+            {/* Info box about SSL */}
+            <div className="info-box">
+              <Info size={20} />
+              <div>
+                <strong>SSL is optional during setup.</strong> You can skip this step and configure SSL later in the Settings page. 
+                The application will work with HTTP, and you can add HTTPS when you're ready.
+              </div>
+            </div>
+
+            {/* Let's Encrypt availability warning */}
+            {setupStatus && !setupStatus.letsEncryptAvailable && (
+              <div className="warning-box">
+                <AlertCircle size={20} />
+                <div>
+                  <strong>Let's Encrypt is not available.</strong> The required acme-client package is not installed. 
+                  To enable Let's Encrypt, rebuild your Docker containers:
+                  <pre>docker compose build --no-cache backend && docker compose up -d</pre>
+                  You can skip SSL now and configure it later after rebuilding.
+                </div>
+              </div>
+            )}
+            
             <div className="form-group">
               <label className="checkbox-label">
                 <input
@@ -200,7 +236,9 @@ function SetupWizard({ onComplete }) {
                     onChange={(e) => setSslConfig({ ...sslConfig, method: e.target.value })}
                     className="form-select"
                   >
-                    <option value="letsencrypt">Let's Encrypt (Automatic)</option>
+                    <option value="letsencrypt" disabled={setupStatus && !setupStatus.letsEncryptAvailable}>
+                      Let's Encrypt (Automatic){setupStatus && !setupStatus.letsEncryptAvailable ? ' - Not Available' : ''}
+                    </option>
                     <option value="manual">Manual Certificate Upload</option>
                   </select>
                   <p className="form-help">
@@ -212,17 +250,31 @@ function SetupWizard({ onComplete }) {
 
                 {sslConfig.method === 'letsencrypt' ? (
                   <>
+                    {/* Let's Encrypt Requirements */}
+                    <div className="requirements-box">
+                      <strong>Before proceeding, ensure:</strong>
+                      <ul>
+                        <li>✓ You have a registered domain name</li>
+                        <li>✓ DNS A record points to this server's public IP address</li>
+                        <li>✓ Port 80 is open and accessible from the internet</li>
+                        <li>✓ Port 443 is open for HTTPS traffic</li>
+                        <li>✓ DNS has propagated (wait 5-60 minutes after DNS changes)</li>
+                      </ul>
+                      <p><strong>If you're not sure, skip this step and configure SSL later.</strong></p>
+                    </div>
+
                     <div className="form-group">
                       <label className="form-label">Domain Name</label>
                       <input
                         type="text"
                         required
-                        placeholder="example.com"
+                        placeholder="example.com or subdomain.example.com"
                         value={sslConfig.domain}
                         onChange={(e) => setSslConfig({ ...sslConfig, domain: e.target.value })}
                       />
                       <p className="form-help">
-                        Enter your domain name (e.g., fireisp.example.com). Make sure this domain points to this server's IP address.
+                        Enter your fully qualified domain name (e.g., fireisp.example.com). 
+                        Do NOT use localhost, IP addresses, or .local domains.
                       </p>
                     </div>
 
@@ -247,10 +299,13 @@ function SetupWizard({ onComplete }) {
                       <textarea
                         rows="6"
                         required
-                        placeholder="Paste your SSL certificate (PEM format)"
+                        placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
                         value={sslConfig.certificate}
                         onChange={(e) => setSslConfig({ ...sslConfig, certificate: e.target.value })}
                       />
+                      <p className="form-help">
+                        Paste your SSL certificate in PEM format (including BEGIN and END lines).
+                      </p>
                     </div>
 
                     <div className="form-group">
@@ -258,10 +313,13 @@ function SetupWizard({ onComplete }) {
                       <textarea
                         rows="6"
                         required
-                        placeholder="Paste your private key (PEM format)"
+                        placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
                         value={sslConfig.privateKey}
                         onChange={(e) => setSslConfig({ ...sslConfig, privateKey: e.target.value })}
                       />
+                      <p className="form-help">
+                        Paste your private key in PEM format (including BEGIN and END lines).
+                      </p>
                     </div>
                   </>
                 )}
@@ -270,9 +328,15 @@ function SetupWizard({ onComplete }) {
 
             <div className="button-group">
               <button type="submit" className="btn btn-primary" disabled={loading}>
-                {loading ? 'Configuring...' : sslConfig.enabled ? 'Save & Continue' : 'Skip'}
+                {loading ? 'Configuring...' : sslConfig.enabled ? 'Configure SSL & Continue' : 'Skip SSL Setup'}
               </button>
             </div>
+            
+            {!sslConfig.enabled && (
+              <p className="skip-note">
+                <Info size={16} /> You can configure SSL later in Settings → System Settings
+              </p>
+            )}
           </form>
         )}
 
