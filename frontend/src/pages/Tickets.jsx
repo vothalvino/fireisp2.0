@@ -17,6 +17,7 @@ function Tickets() {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [stats, setStats] = useState(null);
+  const [loadingTicketFromNav, setLoadingTicketFromNav] = useState(false);
   const [formData, setFormData] = useState({
     clientId: '',
     title: '',
@@ -34,7 +35,8 @@ function Tickets() {
   // Handle ticket navigation from ClientDashboard
   useEffect(() => {
     const loadTicketFromNavigation = async () => {
-      if (location.state?.ticketId && !loading) {
+      if (location.state?.ticketId && !loading && !loadingTicketFromNav) {
+        setLoadingTicketFromNav(true);
         try {
           const response = await ticketService.getOne(location.state.ticketId);
           setSelectedTicket(response.data);
@@ -43,12 +45,14 @@ function Tickets() {
           navigate('/tickets', { replace: true });
         } catch (error) {
           console.error('Failed to load ticket from navigation:', error);
+        } finally {
+          setLoadingTicketFromNav(false);
         }
       }
     };
     
     loadTicketFromNavigation();
-  }, [location.state, loading, navigate]);
+  }, [location.state, loading, loadingTicketFromNav, navigate]);
 
   const loadData = async () => {
     try {
