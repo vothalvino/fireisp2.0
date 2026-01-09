@@ -135,7 +135,7 @@ function Settings() {
 
       {/* Company Information Section */}
       {activeTab === 'company' && (
-      <form onSubmit={(e) => handleSectionSubmit(e, 'Company Information', ['company_name', 'company_email', 'company_phone', 'company_address'])}>
+      <form onSubmit={(e) => handleSectionSubmit(e, 'Company Information', ['company_name', 'company_email', 'company_phone', 'company_address', 'default_billing_day', 'default_days_to_pay'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>Company Information</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
@@ -173,6 +173,42 @@ function Settings() {
                 value={settings.company_address || ''}
                 onChange={(e) => handleInputChange('company_address', e.target.value)}
               />
+            </div>
+          </div>
+
+          <h4 style={{ marginTop: '30px', marginBottom: '15px', borderTop: '1px solid #eee', paddingTop: '20px' }}>
+            Default Recurring Billing Configuration
+          </h4>
+          <p style={{ fontSize: '14px', color: '#666', marginBottom: '20px' }}>
+            These settings define when invoices are automatically generated for services that don't have custom billing settings.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div>
+              <label>Default Billing Day (1-28)</label>
+              <input
+                type="number"
+                min="1"
+                max="28"
+                value={settings.default_billing_day || '1'}
+                onChange={(e) => handleInputChange('default_billing_day', e.target.value)}
+              />
+              <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                Day of the month when recurring invoices are generated (1-28)
+              </p>
+            </div>
+            
+            <div>
+              <label>Default Days to Pay</label>
+              <input
+                type="number"
+                min="1"
+                max="90"
+                value={settings.default_days_to_pay || '15'}
+                onChange={(e) => handleInputChange('default_days_to_pay', e.target.value)}
+              />
+              <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                Number of days from invoice date until payment is due
+              </p>
             </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>

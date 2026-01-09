@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { serviceService, clientService } from '../services/api';
-import { Package, Plus, Edit, Trash2 } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, FileText } from 'lucide-react';
 
 function Services() {
   const [services, setServices] = useState([]);
@@ -8,6 +8,7 @@ function Services() {
   const [clients, setClients] = useState([]);
   const [serviceTypes, setServiceTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generatingInvoices, setGeneratingInvoices] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [showPlanForm, setShowPlanForm] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
@@ -21,7 +22,11 @@ function Services() {
     activationDate: new Date().toISOString().split('T')[0],
     expirationDate: '',
     notes: '',
-    noExpiration: true
+    noExpiration: true,
+    billingDayOfMonth: '',
+    daysUntilDue: '',
+    recurringBillingEnabled: true,
+    useDefaultBilling: true
   });
   const [planFormData, setPlanFormData] = useState({
     serviceTypeId: '',
@@ -64,6 +69,15 @@ function Services() {
         noExpiration: checked,
         expirationDate: checked ? '' : prev.expirationDate
       }));
+    } else if (type === 'checkbox' && name === 'recurringBillingEnabled') {
+      setFormData(prev => ({ ...prev, recurringBillingEnabled: checked }));
+    } else if (type === 'checkbox' && name === 'useDefaultBilling') {
+      setFormData(prev => ({ 
+        ...prev, 
+        useDefaultBilling: checked,
+        billingDayOfMonth: checked ? '' : prev.billingDayOfMonth,
+        daysUntilDue: checked ? '' : prev.daysUntilDue
+      }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -98,6 +112,11 @@ function Services() {
       if (formData.noExpiration) {
         submitData.expirationDate = null;
       }
+      // If using default billing, clear custom billing fields
+      if (formData.useDefaultBilling) {
+        submitData.billingDayOfMonth = null;
+        submitData.daysUntilDue = null;
+      }
       
       if (selectedService) {
         await serviceService.updateClientService(selectedService.id, { ...submitData, status: selectedService.status });
@@ -119,6 +138,7 @@ function Services() {
 
   const handleEdit = (service) => {
     setSelectedService(service);
+    const hasCustomBilling = service.billing_day_of_month !== null || service.days_until_due !== null;
     setFormData({
       clientId: service.client_id,
       servicePlanId: service.service_plan_id,
@@ -129,9 +149,39 @@ function Services() {
       activationDate: service.activation_date || new Date().toISOString().split('T')[0],
       expirationDate: service.expiration_date || '',
       notes: service.notes || '',
-      noExpiration: !service.expiration_date || service.expiration_date === ''
+      noExpiration: !service.expiration_date || service.expiration_date === '',
+      billingDayOfMonth: service.billing_day_of_month || '',
+      daysUntilDue: service.days_until_due || '',
+      recurringBillingEnabled: service.recurring_billing_enabled !== false,
+      useDefaultBilling: !hasCustomBilling
     });
     setShowForm(true);
+  };
+
+  const handleGenerateRecurringInvoices = async () => {
+    if (!confirm('Generate recurring invoices for all active services? This will create invoices for services that are due for billing.')) return;
+    
+    setGeneratingInvoices(true);
+    try {
+      const response = await serviceService.generateRecurringInvoices();
+      const result = response.data;
+      
+      if (result.invoices && result.invoices.length > 0) {
+        const invoiceList = result.invoices.map(inv => 
+          `${inv.invoiceNumber} - ${inv.clientName} - $${inv.amount}`
+        ).join('\n');
+        alert(`${result.message}\n\nInvoices created:\n${invoiceList}`);
+      } else {
+        alert(result.message || 'No invoices were generated. All services may already be up to date.');
+      }
+      
+      loadData();
+    } catch (error) {
+      console.error('Failed to generate recurring invoices:', error);
+      alert(error.response?.data?.error?.message || 'Failed to generate recurring invoices');
+    } finally {
+      setGeneratingInvoices(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -158,7 +208,11 @@ function Services() {
       activationDate: new Date().toISOString().split('T')[0],
       expirationDate: '',
       notes: '',
-      noExpiration: true
+      noExpiration: true,
+      billingDayOfMonth: '',
+      daysUntilDue: '',
+      recurringBillingEnabled: true,
+      useDefaultBilling: true
     });
   };
 
@@ -429,6 +483,78 @@ function Services() {
                   style={{ opacity: formData.noExpiration ? 0.5 : 1 }}
                 />
               </div>
+
+              {/* Recurring Billing Configuration Section */}
+              <div style={{ gridColumn: '1 / -1', marginTop: '10px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                <h4 style={{ marginBottom: '15px', fontSize: '16px' }}>Recurring Billing Configuration</h4>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                  <input
+                    type="checkbox"
+                    name="recurringBillingEnabled"
+                    checked={formData.recurringBillingEnabled}
+                    onChange={handleInputChange}
+                    id="recurringBillingCheckbox"
+                  />
+                  <label htmlFor="recurringBillingCheckbox" style={{ margin: 0, fontWeight: 'normal' }}>
+                    Enable automatic recurring invoices for this service
+                  </label>
+                </div>
+
+                {formData.recurringBillingEnabled && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                      <input
+                        type="checkbox"
+                        name="useDefaultBilling"
+                        checked={formData.useDefaultBilling}
+                        onChange={handleInputChange}
+                        id="useDefaultBillingCheckbox"
+                      />
+                      <label htmlFor="useDefaultBillingCheckbox" style={{ margin: 0, fontWeight: 'normal' }}>
+                        Use company default billing settings
+                      </label>
+                    </div>
+
+                    {!formData.useDefaultBilling && (
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '15px' }}>
+                        <div>
+                          <label>Custom Billing Day (1-28)</label>
+                          <input
+                            type="number"
+                            name="billingDayOfMonth"
+                            min="1"
+                            max="28"
+                            value={formData.billingDayOfMonth}
+                            onChange={handleInputChange}
+                            placeholder="e.g., 1"
+                          />
+                          <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                            Day of month to generate invoices for this service
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <label>Custom Days Until Due</label>
+                          <input
+                            type="number"
+                            name="daysUntilDue"
+                            min="1"
+                            max="90"
+                            value={formData.daysUntilDue}
+                            onChange={handleInputChange}
+                            placeholder="e.g., 15"
+                          />
+                          <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                            Number of days until invoice payment is due
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+              </div>
               
               <div style={{ gridColumn: '1 / -1' }}>
                 <label>Notes</label>
@@ -467,9 +593,19 @@ function Services() {
           <h1><Package size={32} /> Services</h1>
           <p>Manage client services and plans</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-          <Plus size={20} /> Add Service
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            className="btn btn-secondary" 
+            onClick={handleGenerateRecurringInvoices}
+            disabled={generatingInvoices}
+            title="Generate recurring invoices for active services"
+          >
+            <FileText size={20} /> {generatingInvoices ? 'Generating...' : 'Generate Invoices'}
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+            <Plus size={20} /> Add Service
+          </button>
+        </div>
       </div>
 
       <div className="card mb-4">
