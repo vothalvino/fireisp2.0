@@ -43,7 +43,10 @@ docker-compose up -d
    
    - **Step 2**: SSL Configuration (optional)
      - Skip for HTTP-only setup
-     - Or paste your SSL certificate and key
+     - **Let's Encrypt** (Recommended): Free automatic SSL
+       - Requires: Domain name, DNS configured, port 80 open
+       - See [LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md) if issues occur
+     - **Manual**: Upload your own certificate and key
    
    - **Step 3**: Company Information
      - Company name
@@ -155,6 +158,16 @@ radtest username password YOUR_FIREISP_IP 0 YOUR_RADIUS_SECRET
 ```
 
 ## Troubleshooting
+
+### Let's Encrypt SSL Issues?
+
+See the comprehensive **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** guide.
+
+Quick checks:
+- Domain DNS A record points to server IP
+- Port 80 is accessible from internet
+- Firewall allows ports 80 and 443
+- Use staging mode first: `echo "LETSENCRYPT_STAGING=true" >> /opt/fireisp/.env`
 
 ### Containers not starting?
 ```bash

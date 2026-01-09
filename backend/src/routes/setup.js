@@ -151,6 +151,16 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 console.log(`[Let\'s Encrypt] Domain: ${domain}`);
                 console.log(`[Let\'s Encrypt] Email: ${email}`);
                 
+                // Pre-flight check: Ensure SSL directory and .well-known/acme-challenge exists
+                const sslWellKnownDir = path.join(sslDir, '.well-known');
+                const challengeDirPath = path.join(sslWellKnownDir, 'acme-challenge');
+                
+                console.log('[Let\'s Encrypt] Verifying SSL directory structure...');
+                await fs.mkdir(challengeDirPath, { recursive: true });
+                await fs.chmod(sslWellKnownDir, 0o755);
+                await fs.chmod(challengeDirPath, 0o755);
+                console.log(`[Let\'s Encrypt] Challenge directory ready at: ${challengeDirPath}`);
+                
                 // Create ACME client
                 // Use staging environment if LETSENCRYPT_STAGING=true for testing
                 const useStaging = process.env.LETSENCRYPT_STAGING === 'true';
@@ -192,25 +202,45 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     challengePriority: ['http-01'],
                     challengeCreateFn: async (authz, challenge, keyAuthorization) => {
                         // Store challenge for HTTP-01 validation
-                        console.log(`[Let's Encrypt] Creating HTTP-01 challenge for ${authz.identifier.value}`);
+                        console.log(`[Let's Encrypt] Creating HTTP-01 challenge for domain`);
+                        console.log(`[Let's Encrypt] Challenge token length: ${challenge.token.length} characters`);
+                        
                         const challengeDir = path.join(sslDir, '.well-known', 'acme-challenge');
                         await fs.mkdir(challengeDir, { recursive: true });
+                        
+                        // Set directory permissions to ensure nginx can access
+                        await fs.chmod(path.join(sslDir, '.well-known'), 0o755);
+                        await fs.chmod(challengeDir, 0o755);
+                        
                         const challengeFilePath = path.join(challengeDir, challenge.token);
                         await fs.writeFile(challengeFilePath, keyAuthorization);
+                        
                         // Set proper permissions for nginx to read
                         await fs.chmod(challengeFilePath, 0o644);
-                        // Log truncated token for security (avoid exposing full token in logs)
-                        console.log(`[Let's Encrypt] Challenge file created: ${challenge.token.substring(0, 16)}...`);
+                        
+                        // Verify file was created successfully
+                        try {
+                            const fileStats = await fs.stat(challengeFilePath);
+                            const filePermissions = (fileStats.mode & 0o777).toString(8);
+                            console.log(`[Let's Encrypt] Challenge file created successfully`);
+                            console.log(`[Let's Encrypt] File size: ${fileStats.size} bytes, permissions: ${filePermissions}`);
+                        } catch (statErr) {
+                            console.error(`[Let's Encrypt] ERROR: Challenge file verification failed:`, statErr);
+                            throw statErr;
+                        }
+                        
                         // Give time for the file system and nginx to sync
+                        console.log(`[Let's Encrypt] Waiting ${CHALLENGE_FILE_SYNC_DELAY_MS}ms for file system sync...`);
                         await new Promise(resolve => setTimeout(resolve, CHALLENGE_FILE_SYNC_DELAY_MS));
+                        console.log(`[Let's Encrypt] Challenge file ready for validation`);
                     },
                     challengeRemoveFn: async (authz, challenge) => {
                         // Clean up challenge file
-                        console.log(`[Let's Encrypt] Removing challenge file for ${authz.identifier.value}`);
+                        console.log(`[Let's Encrypt] Removing challenge file`);
                         const challengeFile = path.join(sslDir, '.well-known', 'acme-challenge', challenge.token);
                         try {
                             await fs.unlink(challengeFile);
-                            console.log(`[Let's Encrypt] Challenge file removed: ${challenge.token.substring(0, 16)}...`);
+                            console.log(`[Let's Encrypt] Challenge file removed successfully`);
                         } catch (err) {
                             // Ignore error if file doesn't exist (ENOENT)
                             if (err.code !== 'ENOENT') {
