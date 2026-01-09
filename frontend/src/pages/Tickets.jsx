@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ticketService, clientService, userService } from '../services/api';
 import { Ticket, Plus, Eye, Trash2, MessageSquare, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
 
 function Tickets() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
@@ -39,7 +40,7 @@ function Tickets() {
           setSelectedTicket(response.data);
           setShowDetails(true);
           // Clear the state to prevent re-triggering
-          window.history.replaceState({}, document.title);
+          navigate('/tickets', { replace: true });
         } catch (error) {
           console.error('Failed to load ticket from navigation:', error);
         }
@@ -47,7 +48,7 @@ function Tickets() {
     };
     
     loadTicketFromNavigation();
-  }, [location.state, loading]);
+  }, [location.state, loading, navigate]);
 
   const loadData = async () => {
     try {
