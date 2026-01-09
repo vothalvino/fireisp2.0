@@ -5,7 +5,7 @@ import { Settings as SettingsIcon, Save } from 'lucide-react';
 function Settings() {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingSection, setSavingSection] = useState(null);
 
   useEffect(() => {
     loadSettings();
@@ -31,23 +31,25 @@ function Settings() {
     setSettings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSectionSubmit = async (e, sectionName, settingKeys) => {
     e.preventDefault();
-    setSaving(true);
+    setSavingSection(sectionName);
     
     try {
-      const settingsArray = Object.entries(settings).map(([key, value]) => ({
-        key,
-        value
-      }));
+      const settingsArray = settingKeys
+        .filter(key => settings[key] !== undefined)
+        .map(key => ({
+          key,
+          value: settings[key]
+        }));
       
       await settingsService.bulkUpdate({ settings: settingsArray });
-      alert('Settings saved successfully');
+      alert(`${sectionName} saved successfully`);
     } catch (error) {
-      console.error('Failed to save settings:', error);
-      alert('Failed to save settings');
+      console.error(`Failed to save ${sectionName}:`, error);
+      alert(`Failed to save ${sectionName}`);
     } finally {
-      setSaving(false);
+      setSavingSection(null);
     }
   };
 
@@ -62,10 +64,11 @@ function Settings() {
         <p>Configure application settings</p>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      {/* Company Information Section */}
+      <form onSubmit={(e) => handleSectionSubmit(e, 'Company Information', ['company_name', 'company_email', 'company_phone', 'company_address'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>Company Information</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label>Company Name</label>
               <input
@@ -102,11 +105,23 @@ function Settings() {
               />
             </div>
           </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={savingSection === 'Company Information'}
+            >
+              <Save size={20} /> {savingSection === 'Company Information' ? 'Saving...' : 'Save Company Information'}
+            </button>
+          </div>
         </div>
+      </form>
 
+      {/* SSL Configuration Section */}
+      <form onSubmit={(e) => handleSectionSubmit(e, 'SSL Configuration', ['ssl_enabled', 'ssl_method', 'letsencrypt_domain', 'letsencrypt_email'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>SSL Configuration</h3>
-          <div>
+          <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
               <input
                 type="checkbox"
@@ -187,11 +202,23 @@ function Settings() {
               </p>
             )}
           </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={savingSection === 'SSL Configuration'}
+            >
+              <Save size={20} /> {savingSection === 'SSL Configuration' ? 'Saving...' : 'Save SSL Configuration'}
+            </button>
+          </div>
         </div>
+      </form>
 
+      {/* RADIUS Configuration Section */}
+      <form onSubmit={(e) => handleSectionSubmit(e, 'RADIUS Configuration', ['radius_secret', 'radius_auth_port', 'radius_acct_port'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>RADIUS Configuration</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label>RADIUS Secret</label>
               <input
@@ -220,11 +247,23 @@ function Settings() {
               />
             </div>
           </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={savingSection === 'RADIUS Configuration'}
+            >
+              <Save size={20} /> {savingSection === 'RADIUS Configuration' ? 'Saving...' : 'Save RADIUS Configuration'}
+            </button>
+          </div>
         </div>
+      </form>
 
+      {/* Application Settings Section */}
+      <form onSubmit={(e) => handleSectionSubmit(e, 'Application Settings', ['session_timeout', 'timezone', 'currency_symbol', 'date_format'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>Application Settings</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label>Session Timeout (minutes)</label>
               <input
@@ -266,11 +305,23 @@ function Settings() {
               </select>
             </div>
           </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={savingSection === 'Application Settings'}
+            >
+              <Save size={20} /> {savingSection === 'Application Settings' ? 'Saving...' : 'Save Application Settings'}
+            </button>
+          </div>
         </div>
+      </form>
 
+      {/* Email Configuration Section */}
+      <form onSubmit={(e) => handleSectionSubmit(e, 'Email Configuration', ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password', 'from_email', 'smtp_tls'])}>
         <div className="card" style={{ marginBottom: '20px' }}>
           <h3>Email Configuration</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
             <div>
               <label>SMTP Host</label>
               <input
@@ -329,16 +380,15 @@ function Settings() {
               </label>
             </div>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <button 
-            type="submit" 
-            className="btn btn-primary"
-            disabled={saving}
-          >
-            <Save size={20} /> {saving ? 'Saving...' : 'Save Settings'}
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button 
+              type="submit" 
+              className="btn btn-primary"
+              disabled={savingSection === 'Email Configuration'}
+            >
+              <Save size={20} /> {savingSection === 'Email Configuration' ? 'Saving...' : 'Save Email Configuration'}
+            </button>
+          </div>
         </div>
       </form>
     </div>
