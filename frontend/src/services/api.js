@@ -120,4 +120,21 @@ export const ticketService = {
   getStats: () => api.get('/tickets/stats/overview'),
 };
 
+export const documentService = {
+  upload: (clientId, formData) => {
+    return api.post(`/documents/${clientId}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  getAll: (clientId) => api.get(`/documents/${clientId}`),
+  download: (clientId, documentId) => {
+    return api.get(`/documents/${clientId}/download/${documentId}`, {
+      responseType: 'blob',
+    });
+  },
+  delete: (clientId, documentId) => api.delete(`/documents/${clientId}/${documentId}`),
+};
+
 export default api;
