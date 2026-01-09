@@ -808,7 +808,7 @@ function ClientDashboard() {
                 <div className="form-group">
                   <label>Password *</label>
                   <input
-                    type="text"
+                    type="password"
                     name="password"
                     value={serviceFormData.password}
                     onChange={handleServiceInputChange}
