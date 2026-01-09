@@ -44,8 +44,8 @@ function ClientDashboard() {
   const [showTicketForm, setShowTicketForm] = useState(false);
   const [plans, setPlans] = useState([]);
   const [users, setUsers] = useState([]);
-  const [serviceFormData, setServiceFormData] = useState(getInitialServiceFormData());
-  const [ticketFormData, setTicketFormData] = useState(getInitialTicketFormData());
+  const [serviceFormData, setServiceFormData] = useState(() => getInitialServiceFormData(id));
+  const [ticketFormData, setTicketFormData] = useState(() => getInitialTicketFormData(id));
 
   const loadClientData = async () => {
     try {
@@ -80,10 +80,13 @@ function ClientDashboard() {
   useEffect(() => {
     loadClientData();
     loadFormsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  useEffect(() => {
     // Update clientId in forms when id changes
     setServiceFormData(prev => ({ ...prev, clientId: id }));
     setTicketFormData(prev => ({ ...prev, clientId: id }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadFormsData = async () => {
