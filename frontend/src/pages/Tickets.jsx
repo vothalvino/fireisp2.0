@@ -62,7 +62,13 @@ function Tickets() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await ticketService.create(formData);
+      // Clean up form data: convert empty strings to null for optional UUID fields
+      const cleanedData = {
+        ...formData,
+        clientId: formData.clientId || null,
+        assignedTo: formData.assignedTo || null,
+      };
+      await ticketService.create(cleanedData);
       alert('Ticket created successfully');
       setShowForm(false);
       resetForm();
