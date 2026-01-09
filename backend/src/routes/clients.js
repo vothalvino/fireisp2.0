@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../utils/database');
 const { authMiddleware } = require('../middleware/auth');
+const { DEFAULT_CLIENT_TYPE } = require('../utils/constants');
 
 // All routes require authentication
 router.use(authMiddleware);
@@ -106,17 +107,17 @@ router.post('/', async (req, res) => {
     try {
         const {
             clientCode, companyName, contactPerson, email, phone, mobile,
-            address, city, state, postalCode, country, taxId, notes
+            address, city, state, postalCode, country, taxId, notes, clientType
         } = req.body;
         
         const result = await db.query(
             `INSERT INTO clients (
                 client_code, company_name, contact_person, email, phone, mobile,
-                address, city, state, postal_code, country, tax_id, notes, created_by
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                address, city, state, postal_code, country, tax_id, notes, created_by, client_type
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING *`,
             [clientCode, companyName, contactPerson, email, phone, mobile,
-             address, city, state, postalCode, country, taxId, notes, req.user.id]
+             address, city, state, postalCode, country, taxId, notes, req.user.id, clientType || DEFAULT_CLIENT_TYPE]
         );
         
         res.status(201).json(result.rows[0]);
@@ -134,18 +135,18 @@ router.put('/:id', async (req, res) => {
     try {
         const {
             clientCode, companyName, contactPerson, email, phone, mobile,
-            address, city, state, postalCode, country, taxId, status, notes
+            address, city, state, postalCode, country, taxId, status, notes, clientType
         } = req.body;
         
         const result = await db.query(
             `UPDATE clients SET
                 client_code = $1, company_name = $2, contact_person = $3, email = $4,
                 phone = $5, mobile = $6, address = $7, city = $8, state = $9,
-                postal_code = $10, country = $11, tax_id = $12, status = $13, notes = $14
-            WHERE id = $15
+                postal_code = $10, country = $11, tax_id = $12, status = $13, notes = $14, client_type = $15
+            WHERE id = $16
             RETURNING *`,
             [clientCode, companyName, contactPerson, email, phone, mobile,
-             address, city, state, postalCode, country, taxId, status, notes, req.params.id]
+             address, city, state, postalCode, country, taxId, status, notes, clientType || DEFAULT_CLIENT_TYPE, req.params.id]
         );
         
         if (result.rows.length === 0) {
