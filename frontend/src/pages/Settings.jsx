@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { settingsService } from '../services/api';
 import { Settings as SettingsIcon, Save, Shield, AlertCircle } from 'lucide-react';
+import './Settings.css';
 
 function Settings() {
   const [settings, setSettings] = useState({});
@@ -115,45 +116,14 @@ function Settings() {
 
       {/* Horizontal Tab Navigation */}
       <div className="card" style={{ marginBottom: '20px', padding: '0' }}>
-        <div style={{ 
-          display: 'flex', 
-          borderBottom: '2px solid #e2e8f0',
-          overflowX: 'auto'
-        }}>
+        <div className="settings-tabs">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                style={{
-                  padding: '1rem 1.5rem',
-                  border: 'none',
-                  background: 'transparent',
-                  cursor: 'pointer',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: activeTab === tab.id ? '#3b82f6' : '#64748b',
-                  borderBottom: activeTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
-                  marginBottom: '-2px',
-                  transition: 'all 0.2s',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  whiteSpace: 'nowrap'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.color = '#3b82f6';
-                    e.target.style.backgroundColor = '#f8fafc';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== tab.id) {
-                    e.target.style.color = '#64748b';
-                    e.target.style.backgroundColor = 'transparent';
-                  }
-                }}
+                className={`settings-tab-button ${activeTab === tab.id ? 'active' : ''}`}
               >
                 <Icon size={16} />
                 {tab.label}
