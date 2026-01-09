@@ -8,7 +8,9 @@ mkdir -p /etc/nginx/ssl
 # This directory must exist and be writable for Let's Encrypt HTTP-01 challenges to work
 echo "Creating Let's Encrypt ACME challenge directory..."
 mkdir -p /etc/nginx/ssl/.well-known/acme-challenge
-chmod -R 755 /etc/nginx/ssl/.well-known
+# Set permissions only on directories, not files (avoid -R to preserve file permissions)
+chmod 755 /etc/nginx/ssl/.well-known
+chmod 755 /etc/nginx/ssl/.well-known/acme-challenge
 echo "ACME challenge directory created at /etc/nginx/ssl/.well-known/acme-challenge"
 
 # Check if SSL certificates exist and are readable, if not generate self-signed ones
