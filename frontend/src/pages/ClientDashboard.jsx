@@ -16,7 +16,8 @@ const getInitialServiceFormData = (clientId = '') => ({
   macAddress: '',
   activationDate: new Date().toISOString().split('T')[0],
   expirationDate: '',
-  notes: ''
+  notes: '',
+  noExpiration: true
 });
 
 const getInitialTicketFormData = (clientId = '') => ({
@@ -187,8 +188,16 @@ function ClientDashboard() {
   };
 
   const handleServiceInputChange = (e) => {
-    const { name, value } = e.target;
-    setServiceFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    if (type === 'checkbox' && name === 'noExpiration') {
+      setServiceFormData(prev => ({ 
+        ...prev, 
+        noExpiration: checked,
+        expirationDate: checked ? '' : prev.expirationDate
+      }));
+    } else {
+      setServiceFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleTicketInputChange = (e) => {
@@ -199,7 +208,12 @@ function ClientDashboard() {
   const handleServiceSubmit = async (e) => {
     e.preventDefault();
     try {
-      await serviceService.createClientService(serviceFormData);
+      const submitData = { ...serviceFormData };
+      // If no expiration is selected, set expirationDate to null/empty
+      if (serviceFormData.noExpiration) {
+        submitData.expirationDate = null;
+      }
+      await serviceService.createClientService(submitData);
       alert('Service created successfully!');
       setShowServiceForm(false);
       resetServiceForm();
@@ -853,12 +867,26 @@ function ClientDashboard() {
 
                   <div className="form-group">
                     <label>Expiration Date</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                      <input
+                        type="checkbox"
+                        name="noExpiration"
+                        checked={serviceFormData.noExpiration}
+                        onChange={handleServiceInputChange}
+                        id="noExpirationCheckboxClient"
+                      />
+                      <label htmlFor="noExpirationCheckboxClient" style={{ margin: 0, fontWeight: 'normal' }}>
+                        No Expiration (Indefinite)
+                      </label>
+                    </div>
                     <input
                       type="date"
                       name="expirationDate"
                       value={serviceFormData.expirationDate}
                       onChange={handleServiceInputChange}
                       className="form-input"
+                      disabled={serviceFormData.noExpiration}
+                      style={{ opacity: serviceFormData.noExpiration ? 0.5 : 1 }}
                     />
                   </div>
                 </div>

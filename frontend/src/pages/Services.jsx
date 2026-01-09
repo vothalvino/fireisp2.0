@@ -20,7 +20,8 @@ function Services() {
     macAddress: '',
     activationDate: new Date().toISOString().split('T')[0],
     expirationDate: '',
-    notes: ''
+    notes: '',
+    noExpiration: true
   });
   const [planFormData, setPlanFormData] = useState({
     serviceTypeId: '',
@@ -56,8 +57,16 @@ function Services() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    if (type === 'checkbox' && name === 'noExpiration') {
+      setFormData(prev => ({ 
+        ...prev, 
+        noExpiration: checked,
+        expirationDate: checked ? '' : prev.expirationDate
+      }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handlePlanInputChange = (e) => {
@@ -84,11 +93,17 @@ function Services() {
     e.preventDefault();
     
     try {
+      const submitData = { ...formData };
+      // If no expiration is selected, set expirationDate to null/empty
+      if (formData.noExpiration) {
+        submitData.expirationDate = null;
+      }
+      
       if (selectedService) {
-        await serviceService.updateClientService(selectedService.id, { ...formData, status: selectedService.status });
+        await serviceService.updateClientService(selectedService.id, { ...submitData, status: selectedService.status });
         alert('Service updated successfully');
       } else {
-        await serviceService.createClientService(formData);
+        await serviceService.createClientService(submitData);
         alert('Service created successfully');
       }
       
@@ -113,7 +128,8 @@ function Services() {
       macAddress: service.mac_address || '',
       activationDate: service.activation_date || new Date().toISOString().split('T')[0],
       expirationDate: service.expiration_date || '',
-      notes: service.notes || ''
+      notes: service.notes || '',
+      noExpiration: !service.expiration_date
     });
     setShowForm(true);
   };
@@ -141,7 +157,8 @@ function Services() {
       macAddress: '',
       activationDate: new Date().toISOString().split('T')[0],
       expirationDate: '',
-      notes: ''
+      notes: '',
+      noExpiration: true
     });
   };
 
@@ -391,11 +408,25 @@ function Services() {
               
               <div>
                 <label>Expiration Date</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                  <input
+                    type="checkbox"
+                    name="noExpiration"
+                    checked={formData.noExpiration}
+                    onChange={handleInputChange}
+                    id="noExpirationCheckbox"
+                  />
+                  <label htmlFor="noExpirationCheckbox" style={{ margin: 0, fontWeight: 'normal' }}>
+                    No Expiration (Indefinite)
+                  </label>
+                </div>
                 <input
                   type="date"
                   name="expirationDate"
                   value={formData.expirationDate}
                   onChange={handleInputChange}
+                  disabled={formData.noExpiration}
+                  style={{ opacity: formData.noExpiration ? 0.5 : 1 }}
                 />
               </div>
               
@@ -505,7 +536,7 @@ function Services() {
                       {service.status}
                     </span>
                   </td>
-                  <td>{service.expiration_date ? new Date(service.expiration_date).toLocaleDateString() : '-'}</td>
+                  <td>{service.expiration_date ? new Date(service.expiration_date).toLocaleDateString() : 'Indefinite'}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button
