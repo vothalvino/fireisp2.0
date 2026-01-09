@@ -6,8 +6,15 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs').promises;
 const path = require('path');
 const acme = require('acme-client');
+const { exec } = require('child_process');
+const { promisify } = require('util');
 
+const execAsync = promisify(exec);
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
+
+// Configuration constants
+const FRONTEND_CONTAINER_NAME = process.env.FRONTEND_CONTAINER_NAME || 'fireisp-frontend';
+const CERTBOT_TIMEOUT_MS = parseInt(process.env.CERTBOT_TIMEOUT_MS) || 120000;
 
 // Let's Encrypt challenge file sync delay (in milliseconds)
 // This delay allows time for the file system and nginx to sync before ACME validation
@@ -53,11 +60,25 @@ router.get('/status', async (req, res) => {
             console.error('[System Health] acme-client not available:', err.message);
         }
         
+        // Check if certbot is available
+        let certbotAvailable = false;
+        let certbotVersion = null;
+        try {
+            const { stdout } = await execAsync(`docker exec ${FRONTEND_CONTAINER_NAME} certbot --version`);
+            certbotVersion = stdout.trim();
+            certbotAvailable = true;
+            console.log('[System Health] certbot available:', certbotVersion);
+        } catch (err) {
+            console.log('[System Health] certbot not available in frontend container');
+        }
+        
         res.json({ 
             setupCompleted,
             sslEnabled: false,
             letsEncryptAvailable: acmeClientAvailable,
-            acmeClientVersion: acmeClientVersion
+            acmeClientVersion: acmeClientVersion,
+            certbotAvailable: certbotAvailable,
+            certbotVersion: certbotVersion
         });
     } catch (error) {
         console.error('Setup status error:', error);
@@ -401,6 +422,141 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
             );
             
             res.json({ message: 'SSL configured successfully', sslEnabled: true });
+        } else if (method === 'certbot') {
+            // Certbot with nginx plugin
+            // Validate required fields
+            if (!domain || !email) {
+                return res.status(400).json({ 
+                    error: { message: 'Domain and email are required for Certbot' } 
+                });
+            }
+            
+            // Validate domain format
+            const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+            if (!domainRegex.test(domain)) {
+                return res.status(400).json({ 
+                    error: { message: 'Invalid domain format' } 
+                });
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                return res.status(400).json({ 
+                    error: { message: 'Invalid email format' } 
+                });
+            }
+            
+            try {
+                console.log('[Certbot] Starting certificate acquisition during setup...');
+                console.log(`[Certbot] Domain: ${domain}`);
+                console.log(`[Certbot] Email: ${email}`);
+                
+                // Check if certbot is available in frontend container
+                const frontendContainer = FRONTEND_CONTAINER_NAME;
+                try {
+                    await execAsync(`docker exec ${frontendContainer} certbot --version`);
+                } catch (certbotErr) {
+                    return res.status(500).json({
+                        error: { 
+                            message: 'Certbot is not installed in the frontend container. Please rebuild containers with: docker compose build --no-cache frontend && docker compose up -d, or choose a different SSL method.' 
+                        }
+                    });
+                }
+                
+                // Build certbot command to run in frontend container
+                const certbotCmd = `docker exec ${frontendContainer} certbot --nginx -d ${domain} --non-interactive --agree-tos --email ${email}`;
+                
+                console.log('[Certbot] Executing command in frontend container...');
+                
+                const { stdout, stderr } = await execAsync(certbotCmd, { 
+                    timeout: CERTBOT_TIMEOUT_MS
+                });
+                
+                console.log('[Certbot] Output:', stdout);
+                if (stderr) {
+                    console.log('[Certbot] Stderr:', stderr);
+                }
+                
+                // Update database settings
+                await db.query(
+                    "UPDATE system_settings SET value = $1 WHERE key = 'letsencrypt_domain'",
+                    [domain]
+                );
+                await db.query(
+                    "UPDATE system_settings SET value = $1 WHERE key = 'letsencrypt_email'",
+                    [email]
+                );
+                await db.query(
+                    "UPDATE system_settings SET value = 'certbot' WHERE key = 'ssl_method'"
+                );
+                await db.query(
+                    "UPDATE system_settings SET value = 'true' WHERE key = 'ssl_enabled'"
+                );
+                
+                console.log('[Certbot] Certificate acquired and configured successfully');
+                res.json({ 
+                    message: 'SSL certificate acquired with Certbot and nginx configured successfully', 
+                    sslEnabled: true,
+                    domain 
+                });
+            } catch (execError) {
+                console.error('[Certbot] Execution error:', execError);
+                
+                let errorMessage = 'Failed to acquire SSL certificate with certbot. ';
+                let troubleshootingSteps = [];
+                
+                const errorOutput = execError.stderr || execError.stdout || execError.message;
+                const safeDomain = domainRegex.test(domain) ? domain : '[invalid-domain]';
+                
+                if (errorOutput.toLowerCase().includes('dns')) {
+                    errorMessage += 'DNS resolution failed.';
+                    troubleshootingSteps = [
+                        `Verify your domain's DNS A record points to this server's public IP`,
+                        'Wait 5-60 minutes for DNS propagation',
+                        `Test DNS: nslookup ${safeDomain}`,
+                        'Check DNS globally at https://dnschecker.org'
+                    ];
+                } else if (errorOutput.toLowerCase().includes('challenge') || errorOutput.toLowerCase().includes('authorization')) {
+                    errorMessage += 'Challenge validation failed.';
+                    troubleshootingSteps = [
+                        'Ensure port 80 is open: sudo ufw allow 80/tcp',
+                        'Ensure port 443 is open: sudo ufw allow 443/tcp',
+                        'Verify no other service is using port 80',
+                        `Test HTTP access: curl http://${safeDomain}`
+                    ];
+                } else if (errorOutput.toLowerCase().includes('rate limit')) {
+                    errorMessage += 'Let\'s Encrypt rate limit reached.';
+                    troubleshootingSteps = [
+                        'Wait for rate limit reset (weekly)',
+                        'Consider using a different subdomain',
+                        'See https://letsencrypt.org/docs/rate-limits/'
+                    ];
+                } else if (errorOutput.toLowerCase().includes('timeout')) {
+                    errorMessage += 'Connection timeout.';
+                    troubleshootingSteps = [
+                        'Check firewall settings',
+                        'Verify server is accessible from internet',
+                        'Check if behind NAT (configure port forwarding)'
+                    ];
+                } else {
+                    errorMessage += errorOutput;
+                    troubleshootingSteps = [
+                        'Check logs: docker compose logs frontend',
+                        'Verify all prerequisites are met',
+                        'Consider using manual certificate upload or skipping SSL for now',
+                        'You can configure SSL later in Settings after setup'
+                    ];
+                }
+                
+                const fullErrorMessage = `${errorMessage}\n\nTroubleshooting steps:\n${troubleshootingSteps.map((step, i) => `${i + 1}. ${step}`).join('\n')}\n\nYou can skip SSL setup for now and configure it later in the Settings page.`;
+                
+                return res.status(500).json({ 
+                    error: { 
+                        message: fullErrorMessage
+                    } 
+                });
+            }
         } else {
             return res.status(400).json({ 
                 error: { message: 'Invalid SSL configuration method or missing required fields' } 

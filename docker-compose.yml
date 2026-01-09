@@ -62,6 +62,7 @@ services:
     volumes:
       - ./uploads:/app/uploads
       - ./ssl:/app/ssl
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:
         condition: service_healthy

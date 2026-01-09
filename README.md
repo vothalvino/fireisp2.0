@@ -125,11 +125,28 @@ HTTPS_PORT=443
 
 ### SSL Configuration
 
-SSL can be configured in three ways:
+SSL can be configured using three different methods:
 
 **RECOMMENDED APPROACH: Skip SSL during initial setup and configure it later!**
 
 See [SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md) for a practical, step-by-step guide that doesn't require SSL expertise.
+
+#### SSL Methods
+
+1. **Let's Encrypt (acme-client)** - Node.js-based automatic certificate
+   - Built into backend, no additional setup
+   - Automatic certificate validation and configuration
+   - Good for programmatic control
+
+2. **Certbot (nginx plugin)** - System-level Let's Encrypt client ⭐ NEW
+   - Uses standard certbot tool with nginx plugin
+   - Automatically configures nginx
+   - Built-in renewal system
+   - See [CERTBOT_GUIDE.md](CERTBOT_GUIDE.md) for detailed instructions
+
+3. **Manual Certificate Upload** - Bring your own certificate
+   - Upload existing SSL certificates
+   - Useful for commercial or wildcard certificates
 
 #### Quick Summary
 
@@ -139,7 +156,7 @@ See [SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md) for a practical, step-by-
    - Configure SSL later in Settings when you're ready
    - No risk of setup failure due to SSL issues
 
-2. **During Setup Wizard - Let's Encrypt**
+2. **During Setup Wizard - Let's Encrypt or Certbot**
    - Only if you have domain and DNS already configured
    - Automatically obtains a free SSL certificate from Let's Encrypt
    - Requires a valid domain name pointing to your server
@@ -154,7 +171,7 @@ See [SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md) for a practical, step-by-
 4. **After Setup - Settings Page**
    - Best option for most users
    - Configure SSL when you're ready via Settings → System Settings
-   - Same options available: Let's Encrypt or Manual Upload
+   - All three methods available: acme-client, Certbot, or Manual Upload
    - Can test and troubleshoot without restarting setup
 
 **Let's Encrypt Requirements:**
@@ -397,6 +414,7 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 ## Documentation
 
 - **[SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md)** - 🌟 **NEW: Practical SSL setup guide (no SSL expertise required)**
+- **[CERTBOT_GUIDE.md](CERTBOT_GUIDE.md)** - ⭐ **NEW: Certbot SSL configuration guide with nginx plugin**
 - **[UPDATE.md](UPDATE.md)** - Comprehensive update guide with troubleshooting
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide

@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import { settingsService } from '../services/api';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Shield, AlertCircle } from 'lucide-react';
 
 function Settings() {
   const [settings, setSettings] = useState({});
   const [loading, setLoading] = useState(true);
   const [savingSection, setSavingSection] = useState(null);
+  const [certbotStatus, setCertbotStatus] = useState(null);
+  const [certbotLoading, setCertbotLoading] = useState(false);
 
   useEffect(() => {
     loadSettings();
+    checkCertbotStatus();
   }, []);
 
   const loadSettings = async () => {
@@ -24,6 +27,43 @@ function Settings() {
       alert('Failed to load settings');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const checkCertbotStatus = async () => {
+    try {
+      const response = await settingsService.checkCertbot();
+      setCertbotStatus(response.data);
+    } catch (error) {
+      console.error('Failed to check certbot status:', error);
+      setCertbotStatus({ available: false });
+    }
+  };
+
+  const handleCertbotConfigure = async () => {
+    if (!settings.letsencrypt_domain || !settings.letsencrypt_email) {
+      alert('Please enter domain and email before configuring certbot');
+      return;
+    }
+
+    if (!window.confirm('This will configure SSL certificate using certbot. The process may take a few minutes. Continue?')) {
+      return;
+    }
+
+    setCertbotLoading(true);
+    try {
+      const response = await settingsService.configureCertbot({
+        domain: settings.letsencrypt_domain,
+        email: settings.letsencrypt_email,
+        dryRun: false
+      });
+      alert(response.data.message || 'Certificate configured successfully!');
+      await loadSettings();
+    } catch (error) {
+      console.error('Failed to configure certbot:', error);
+      alert(error.response?.data?.error?.message || 'Failed to configure certificate');
+    } finally {
+      setCertbotLoading(false);
     }
   };
 
@@ -146,17 +186,86 @@ function Settings() {
                       fontSize: '14px'
                     }}
                   >
-                    <option value="letsencrypt">Let's Encrypt (Automatic)</option>
+                    <option value="letsencrypt">Let's Encrypt (acme-client)</option>
+                    <option value="certbot" disabled={!certbotStatus?.available}>
+                      Certbot (nginx plugin){!certbotStatus?.available ? ' - Not Installed' : ''}
+                    </option>
                     <option value="manual">Manual Certificate Upload</option>
                   </select>
                   <p style={{ fontSize: '14px', color: '#666', marginTop: '5px' }}>
                     {settings.ssl_method === 'manual' 
                       ? "Upload your own SSL certificate and private key in PEM format."
-                      : "Let's Encrypt will automatically obtain and configure a free SSL certificate for your domain."}
+                      : settings.ssl_method === 'certbot'
+                      ? "Certbot will automatically obtain and configure a free SSL certificate using the nginx plugin."
+                      : "Let's Encrypt with acme-client will automatically obtain and configure a free SSL certificate for your domain."}
                   </p>
+                  
+                  {/* Certbot status indicator */}
+                  {certbotStatus && (
+                    <div style={{ 
+                      marginTop: '10px', 
+                      padding: '10px', 
+                      backgroundColor: certbotStatus.available ? '#e8f5e9' : '#fff3e0',
+                      borderRadius: '4px',
+                      fontSize: '13px'
+                    }}>
+                      <strong>Certbot Status:</strong> {certbotStatus.available ? '✓ Available' : '✗ Not Installed'}
+                      {certbotStatus.version && <span> ({certbotStatus.version})</span>}
+                      {certbotStatus.nginxPlugin !== undefined && (
+                        <span> | Nginx Plugin: {certbotStatus.nginxPlugin ? '✓' : '✗'}</span>
+                      )}
+                      {!certbotStatus.available && (
+                        <div style={{ marginTop: '5px', color: '#666' }}>
+                          To install: <code>apt install certbot python3-certbot-nginx</code>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
-                {settings.ssl_method !== 'manual' && (
+                {settings.ssl_method === 'certbot' && (
+                  <div style={{ marginBottom: '15px', padding: '15px', backgroundColor: '#e3f2fd', borderRadius: '4px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                      <Shield size={20} color="#1976d2" />
+                      <strong>Certbot Configuration</strong>
+                    </div>
+                    <p style={{ fontSize: '14px', marginBottom: '15px', color: '#555' }}>
+                      Certbot will automatically obtain and install SSL certificates from Let's Encrypt 
+                      and configure nginx for you. Enter your domain and email below, then click "Configure with Certbot".
+                    </p>
+                    <div style={{ marginBottom: '10px' }}>
+                      <label>Domain Name</label>
+                      <input
+                        type="text"
+                        value={settings.letsencrypt_domain || ''}
+                        onChange={(e) => handleInputChange('letsencrypt_domain', e.target.value)}
+                        placeholder="example.com"
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                    <div style={{ marginBottom: '15px' }}>
+                      <label>Email Address</label>
+                      <input
+                        type="email"
+                        value={settings.letsencrypt_email || ''}
+                        onChange={(e) => handleInputChange('letsencrypt_email', e.target.value)}
+                        placeholder="admin@example.com"
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                    <button 
+                      type="button"
+                      onClick={handleCertbotConfigure}
+                      disabled={certbotLoading || !certbotStatus?.available}
+                      className="btn btn-primary"
+                      style={{ marginTop: '10px' }}
+                    >
+                      {certbotLoading ? 'Configuring...' : 'Configure with Certbot'}
+                    </button>
+                  </div>
+                )}
+
+                {settings.ssl_method === 'letsencrypt' && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
                     <div>
                       <label>Domain Name</label>
