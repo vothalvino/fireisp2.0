@@ -61,10 +61,10 @@ http://your-server-ip
 
 4. Complete the setup wizard:
    - Create root user account
-   - Configure SSL (optional):
-     - **Let's Encrypt** (Recommended): Automatic free SSL certificate
-     - **Manual Upload**: Use your own SSL certificate
+   - **Skip SSL Configuration** (recommended for initial setup - you can add it later)
    - Enter company information
+
+**Note:** SSL/HTTPS is optional during setup. For the easiest setup experience, skip SSL initially and configure it later. See [SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md) for a practical approach to SSL setup.
 
 ## Manual Installation
 
@@ -127,22 +127,35 @@ HTTPS_PORT=443
 
 SSL can be configured in three ways:
 
-1. **During Setup Wizard - Let's Encrypt** (Recommended)
+**RECOMMENDED APPROACH: Skip SSL during initial setup and configure it later!**
+
+See [SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md) for a practical, step-by-step guide that doesn't require SSL expertise.
+
+#### Quick Summary
+
+1. **Skip During Setup** (Easiest - Recommended)
+   - Leave SSL checkbox unchecked during setup wizard
+   - Complete setup and start using the system immediately
+   - Configure SSL later in Settings when you're ready
+   - No risk of setup failure due to SSL issues
+
+2. **During Setup Wizard - Let's Encrypt**
+   - Only if you have domain and DNS already configured
    - Automatically obtains a free SSL certificate from Let's Encrypt
    - Requires a valid domain name pointing to your server
    - Provide domain name and email address in the setup wizard
    - Certificate is automatically validated and configured
    - For testing: Set `LETSENCRYPT_STAGING=true` in `.env` to use staging environment and avoid rate limits
 
-2. **During Setup Wizard - Manual Upload**
+3. **During Setup Wizard - Manual Upload**
    - Upload your own certificate and private key through the web interface
    - Useful if you already have a commercial SSL certificate
 
-3. **Manual Configuration**
-   - Place certificate files in `./ssl/` directory:
-     - `cert.pem` - SSL certificate
-     - `key.pem` - Private key
-   - Restart containers: `docker-compose restart`
+4. **After Setup - Settings Page**
+   - Best option for most users
+   - Configure SSL when you're ready via Settings → System Settings
+   - Same options available: Let's Encrypt or Manual Upload
+   - Can test and troubleshoot without restarting setup
 
 **Let's Encrypt Requirements:**
 - Domain name must be publicly accessible and point to your server's IP
@@ -383,11 +396,12 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 
 ## Documentation
 
+- **[SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md)** - 🌟 **NEW: Practical SSL setup guide (no SSL expertise required)**
 - **[UPDATE.md](UPDATE.md)** - Comprehensive update guide with troubleshooting
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
 - **[MIKROTIK.md](MIKROTIK.md)** - Mikrotik integration guide
-- **[QUICK_FIX_LETSENCRYPT.md](QUICK_FIX_LETSENCRYPT.md)** - 🚀 **Quick 3-command fix for "Let's Encrypt still failing"**
+- **[QUICK_FIX_LETSENCRYPT.md](QUICK_FIX_LETSENCRYPT.md)** - 🚀 Quick 3-command fix for "Let's Encrypt still failing"
 - **[LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)** - Detailed rebuild instructions
 - **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** - Let's Encrypt troubleshooting and debugging
 - **[LETSENCRYPT_TESTING.md](LETSENCRYPT_TESTING.md)** - Let's Encrypt integration testing guide
@@ -397,6 +411,10 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 ## Troubleshooting
 
 ### Let's Encrypt SSL Certificate Issues
+
+**For the easiest SSL setup experience, see [SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md) - a practical guide that doesn't require SSL expertise.**
+
+**Quick Recommendation:** Skip SSL during initial setup and configure it later through Settings. This avoids setup failures and lets you start using the system immediately.
 
 If you're having trouble configuring Let's Encrypt SSL certificates, **first rebuild your Docker containers** to ensure all dependencies are current:
 

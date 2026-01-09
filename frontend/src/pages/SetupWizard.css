@@ -158,3 +158,95 @@
   margin-top: 0.5rem;
   line-height: 1.4;
 }
+
+/* Info and Warning Boxes */
+.info-box {
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  color: #1e40af;
+}
+
+.info-box svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.warning-box {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  color: #92400e;
+}
+
+.warning-box svg {
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.warning-box pre {
+  background: rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.requirements-box {
+  background: #f0fdf4;
+  border: 1px solid #22c55e;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  color: #166534;
+}
+
+.requirements-box strong {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.requirements-box ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.requirements-box ul li {
+  margin: 0.25rem 0;
+  position: relative;
+}
+
+.requirements-box ul li::before {
+  content: '';
+  position: absolute;
+  left: -1.5rem;
+  width: 1rem;
+}
+
+.requirements-box p {
+  margin-top: 0.75rem;
+  margin-bottom: 0;
+}
+
+.skip-note {
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
