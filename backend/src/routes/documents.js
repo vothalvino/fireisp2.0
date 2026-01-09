@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs').promises;
 const db = require('../utils/database');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -11,22 +11,23 @@ router.use(authMiddleware);
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: async (req, file, cb) => {
         const clientId = req.params.clientId;
         const uploadPath = path.join(__dirname, '../../uploads/clients', clientId);
         
         // Create directory if it doesn't exist
-        if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
+        try {
+            await fs.mkdir(uploadPath, { recursive: true });
+            cb(null, uploadPath);
+        } catch (error) {
+            cb(error);
         }
-        
-        cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        // Generate unique filename with timestamp
+        // Generate unique filename with timestamp and random string
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const ext = path.extname(file.originalname);
-        const basename = path.basename(file.originalname, ext);
+        const basename = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9_-]/g, '_');
         cb(null, basename + '-' + uniqueSuffix + ext);
     }
 });
@@ -71,7 +72,7 @@ router.post('/:clientId/upload', upload.single('document'), async (req, res) => 
         const clientCheck = await db.query('SELECT id FROM clients WHERE id = $1', [clientId]);
         if (clientCheck.rows.length === 0) {
             // Delete uploaded file if client doesn't exist
-            fs.unlinkSync(req.file.path);
+            await fs.unlink(req.file.path).catch(() => {});
             return res.status(404).json({ error: { message: 'Client not found' } });
         }
 
@@ -97,8 +98,8 @@ router.post('/:clientId/upload', upload.single('document'), async (req, res) => 
     } catch (error) {
         console.error('Upload document error:', error);
         // Clean up file if database insert fails
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
+        if (req.file && req.file.path) {
+            await fs.unlink(req.file.path).catch(() => {});
         }
         res.status(500).json({ error: { message: 'Failed to upload document' } });
     }
@@ -142,7 +143,10 @@ router.get('/:clientId/download/:documentId', async (req, res) => {
         const document = result.rows[0];
         const filePath = path.join(__dirname, '../../uploads', document.file_path);
 
-        if (!fs.existsSync(filePath)) {
+        // Check if file exists before attempting download
+        try {
+            await fs.access(filePath);
+        } catch {
             return res.status(404).json({ error: { message: 'File not found on disk' } });
         }
 
@@ -170,13 +174,11 @@ router.delete('/:clientId/:documentId', async (req, res) => {
         const document = result.rows[0];
         const filePath = path.join(__dirname, '../../uploads', document.file_path);
 
-        // Delete from database
+        // Delete from database first
         await db.query('DELETE FROM client_documents WHERE id = $1', [documentId]);
 
-        // Delete file from disk
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-        }
+        // Then delete file from disk (ignore errors if file doesn't exist)
+        await fs.unlink(filePath).catch(() => {});
 
         res.json({ message: 'Document deleted successfully' });
     } catch (error) {
