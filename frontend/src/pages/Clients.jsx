@@ -20,7 +20,8 @@ function Clients() {
     postalCode: '',
     country: '',
     taxId: '',
-    notes: ''
+    notes: '',
+    clientType: 'company'
   });
 
   useEffect(() => {
@@ -80,7 +81,8 @@ function Clients() {
       postalCode: client.postal_code || '',
       country: client.country || '',
       taxId: client.tax_id || '',
-      notes: client.notes || ''
+      notes: client.notes || '',
+      clientType: client.client_type || 'company'
     });
     setShowForm(true);
   };
@@ -112,7 +114,8 @@ function Clients() {
       postalCode: '',
       country: '',
       taxId: '',
-      notes: ''
+      notes: '',
+      clientType: 'company'
     });
   };
 
@@ -144,6 +147,19 @@ function Clients() {
                   onChange={handleInputChange}
                   required
                 />
+              </div>
+              
+              <div>
+                <label>Client Type *</label>
+                <select
+                  name="clientType"
+                  value={formData.clientType}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="company">Company</option>
+                  <option value="personal">Personal</option>
+                </select>
               </div>
               
               <div>
@@ -306,6 +322,7 @@ function Clients() {
             <thead>
               <tr>
                 <th>Client Code</th>
+                <th>Type</th>
                 <th>Company</th>
                 <th>Contact Person</th>
                 <th>Email</th>
@@ -319,6 +336,11 @@ function Clients() {
               {clients.map((client) => (
                 <tr key={client.id}>
                   <td>{client.client_code}</td>
+                  <td>
+                    <span className={`badge badge-${client.client_type === 'company' ? 'info' : 'secondary'}`}>
+                      {client.client_type || 'company'}
+                    </span>
+                  </td>
                   <td>{client.company_name}</td>
                   <td>{client.contact_person}</td>
                   <td>{client.email}</td>
