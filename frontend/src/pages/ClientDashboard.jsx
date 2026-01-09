@@ -220,7 +220,7 @@ function ClientDashboard() {
               {services.slice(0, 5).map((service) => (
                 <div 
                   key={service.id} 
-                  onClick={() => navigate('/services')}
+                  onClick={() => navigate('/services', { state: { clientId: id } })}
                   className="ticket-card-clickable"
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
