@@ -9,6 +9,10 @@ const acme = require('acme-client');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
+// Let's Encrypt challenge file sync delay (in milliseconds)
+// This delay allows time for the file system and nginx to sync before ACME validation
+const CHALLENGE_FILE_SYNC_DELAY_MS = 1000;
+
 // Middleware to check if setup is not completed
 // Prevents abuse of setup endpoints after initial configuration
 async function requireSetupNotCompleted(req, res, next) {
@@ -198,7 +202,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                         // Log truncated token for security (avoid exposing full token in logs)
                         console.log(`[Let\'s Encrypt] Challenge file created: ${challenge.token.substring(0, 16)}...`);
                         // Give time for the file system and nginx to sync
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        await new Promise(resolve => setTimeout(resolve, CHALLENGE_FILE_SYNC_DELAY_MS));
                     },
                     challengeRemoveFn: async (authz, challenge) => {
                         // Clean up challenge file
