@@ -220,12 +220,8 @@ function ClientDashboard() {
               {services.slice(0, 5).map((service) => (
                 <div 
                   key={service.id} 
-                  style={{ 
-                    padding: '15px', 
-                    border: '1px solid #e2e8f0', 
-                    borderRadius: '8px',
-                    backgroundColor: '#f8fafc'
-                  }}
+                  onClick={() => navigate('/services')}
+                  className="ticket-card-clickable"
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <strong>{service.plan_name || 'Service Plan'}</strong>
