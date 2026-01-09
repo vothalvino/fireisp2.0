@@ -385,10 +385,31 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
 - **[MIKROTIK.md](MIKROTIK.md)** - Mikrotik integration guide
+- **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** - Let's Encrypt troubleshooting and debugging
+- **[LETSENCRYPT_TESTING.md](LETSENCRYPT_TESTING.md)** - Let's Encrypt integration testing guide
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
 - **[RELEASE_PROCESS.md](RELEASE_PROCESS.md)** - For maintainers: release procedures
 
 ## Troubleshooting
+
+### Let's Encrypt SSL Certificate Issues
+
+If you're having trouble configuring Let's Encrypt SSL certificates, see the comprehensive **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** guide which covers:
+
+- Prerequisites checklist (domain, DNS, ports, firewall)
+- Common error messages and solutions
+- Step-by-step debugging procedures
+- Manual certificate installation fallback options
+- Testing and validation tools
+
+**Quick checklist before attempting Let's Encrypt:**
+- [ ] Domain is registered and DNS A record points to server's public IP
+- [ ] Port 80 is open and accessible from the internet
+- [ ] Port 443 is open for HTTPS traffic
+- [ ] No firewall blocking incoming connections
+- [ ] DNS has propagated (wait 5-60 minutes after changes)
+
+For detailed troubleshooting steps, see [LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md).
 
 ### GUI Shows "Connection Refused" Error
 
