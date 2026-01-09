@@ -387,7 +387,8 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
 - **[MIKROTIK.md](MIKROTIK.md)** - Mikrotik integration guide
-- **[LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)** - Fix for "Let's Encrypt still failing" issues
+- **[QUICK_FIX_LETSENCRYPT.md](QUICK_FIX_LETSENCRYPT.md)** - 🚀 **Quick 3-command fix for "Let's Encrypt still failing"**
+- **[LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)** - Detailed rebuild instructions
 - **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** - Let's Encrypt troubleshooting and debugging
 - **[LETSENCRYPT_TESTING.md](LETSENCRYPT_TESTING.md)** - Let's Encrypt integration testing guide
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
