@@ -43,9 +43,21 @@ router.get('/status', async (req, res) => {
         
         const setupCompleted = result.rows[0]?.value === 'true';
         
+        // Verify acme-client is available
+        let acmeClientAvailable = false;
+        let acmeClientVersion = null;
+        try {
+            acmeClientVersion = require('acme-client/package.json').version;
+            acmeClientAvailable = true;
+        } catch (err) {
+            console.error('[System Health] acme-client not available:', err.message);
+        }
+        
         res.json({ 
             setupCompleted,
-            sslEnabled: false
+            sslEnabled: false,
+            letsEncryptAvailable: acmeClientAvailable,
+            acmeClientVersion: acmeClientVersion
         });
     } catch (error) {
         console.error('Setup status error:', error);
@@ -147,9 +159,21 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
             }
             
             try {
+                // Verify acme-client is available
+                if (!acme || typeof acme.Client !== 'function') {
+                    console.error('[Let\'s Encrypt] ERROR: acme-client package is not properly installed');
+                    console.error('[Let\'s Encrypt] This typically means the Docker container needs to be rebuilt');
+                    return res.status(500).json({
+                        error: { 
+                            message: 'Let\'s Encrypt functionality is not available. The acme-client package is missing. Please rebuild the Docker containers with: docker-compose build --no-cache backend && docker-compose up -d' 
+                        }
+                    });
+                }
+                
                 console.log('[Let\'s Encrypt] Starting certificate acquisition process');
                 console.log(`[Let\'s Encrypt] Domain: ${domain}`);
                 console.log(`[Let\'s Encrypt] Email: ${email}`);
+                console.log(`[Let\'s Encrypt] acme-client version: ${require('acme-client/package.json').version}`);
                 
                 // Pre-flight check: Ensure SSL directory and .well-known/acme-challenge exists
                 const sslWellKnownDir = path.join(sslDir, '.well-known');

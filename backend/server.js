@@ -62,6 +62,20 @@ app.use((req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`FireISP Backend running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    
+    // Verify critical dependencies
+    try {
+        const acmeVersion = require('acme-client/package.json').version;
+        console.log(`[System Health] acme-client v${acmeVersion} is available - Let's Encrypt functionality enabled`);
+    } catch (err) {
+        console.error('═'.repeat(80));
+        console.error('[System Health] WARNING: acme-client package is NOT installed!');
+        console.error('[System Health] Let\'s Encrypt SSL certificate functionality will NOT work.');
+        console.error('[System Health] To fix this, rebuild the Docker containers:');
+        console.error('[System Health]   docker-compose build --no-cache backend');
+        console.error('[System Health]   docker-compose up -d');
+        console.error('═'.repeat(80));
+    }
 });
 
 module.exports = app;
