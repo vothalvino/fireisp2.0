@@ -129,7 +129,7 @@ function Services() {
       activationDate: service.activation_date || new Date().toISOString().split('T')[0],
       expirationDate: service.expiration_date || '',
       notes: service.notes || '',
-      noExpiration: !service.expiration_date
+      noExpiration: !service.expiration_date || service.expiration_date === ''
     });
     setShowForm(true);
   };
