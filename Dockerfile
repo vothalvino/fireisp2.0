@@ -10,6 +10,8 @@ COPY backend/ ./
 FROM node:20-alpine AS backend
 WORKDIR /app
 COPY --from=backend-builder /app ./
+# Install docker CLI for executing certbot commands in frontend container
+RUN apk add --no-cache docker-cli
 RUN mkdir -p /app/uploads /app/ssl
 EXPOSE 3000
 CMD ["node", "server.js"]

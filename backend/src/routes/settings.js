@@ -142,16 +142,17 @@ router.get('/ssl/certbot-check', async (req, res) => {
     try {
         console.log('[Certbot] Checking certbot availability...');
         
-        // Check if certbot is installed
+        // Check if certbot is installed in the frontend container
+        const frontendContainer = 'fireisp-frontend';
         try {
-            const { stdout } = await execAsync('certbot --version');
+            const { stdout } = await execAsync(`docker exec ${frontendContainer} certbot --version`);
             const version = stdout.trim();
             console.log('[Certbot] Found:', version);
             
-            // Check if python3-certbot-nginx is installed
+            // Check if nginx plugin is available
             let nginxPluginAvailable = false;
             try {
-                await execAsync('certbot plugins 2>&1 | grep -i nginx');
+                await execAsync(`docker exec ${frontendContainer} certbot plugins 2>&1 | grep -i nginx`);
                 nginxPluginAvailable = true;
                 console.log('[Certbot] Nginx plugin is available');
             } catch (pluginErr) {
@@ -169,7 +170,7 @@ router.get('/ssl/certbot-check', async (req, res) => {
                 available: false,
                 version: null,
                 nginxPlugin: false,
-                message: 'Certbot is not installed. Install it with: apt install certbot python3-certbot-nginx'
+                message: 'Certbot is not installed in the frontend container. Rebuild containers with: docker compose build --no-cache frontend && docker compose up -d'
             });
         }
     } catch (error) {
@@ -213,26 +214,27 @@ router.post('/ssl/certbot', async (req, res) => {
         console.log(`[Certbot] Email: ${email}`);
         console.log(`[Certbot] Dry run: ${dryRun || false}`);
         
-        // Check if certbot is available
+        // Check if certbot is available in frontend container
+        const frontendContainer = 'fireisp-frontend';
         try {
-            await execAsync('certbot --version');
+            await execAsync(`docker exec ${frontendContainer} certbot --version`);
         } catch (certbotErr) {
             return res.status(500).json({
                 error: { 
-                    message: 'Certbot is not installed. Please install it first with: apt install certbot python3-certbot-nginx' 
+                    message: 'Certbot is not installed in the frontend container. Please rebuild the containers with: docker compose build --no-cache frontend && docker compose up -d' 
                 }
             });
         }
         
-        // Build certbot command
+        // Build certbot command to run inside frontend container
         // Use --nginx to automatically configure nginx
         // Use --non-interactive to avoid prompts
         // Use --agree-tos to accept terms
         // Use --email for notifications
         const dryRunFlag = dryRun ? '--dry-run' : '';
-        const certbotCmd = `certbot --nginx -d ${domain} --non-interactive --agree-tos --email ${email} ${dryRunFlag}`;
+        const certbotCmd = `docker exec ${frontendContainer} certbot --nginx -d ${domain} --non-interactive --agree-tos --email ${email} ${dryRunFlag}`;
         
-        console.log('[Certbot] Executing command...');
+        console.log('[Certbot] Executing command in frontend container...');
         
         try {
             const { stdout, stderr } = await execAsync(certbotCmd, { 
@@ -345,18 +347,19 @@ router.post('/ssl/certbot-renew', async (req, res) => {
     try {
         console.log('[Certbot] Starting certificate renewal...');
         
-        // Check if certbot is available
+        // Check if certbot is available in frontend container
+        const frontendContainer = 'fireisp-frontend';
         try {
-            await execAsync('certbot --version');
+            await execAsync(`docker exec ${frontendContainer} certbot --version`);
         } catch (certbotErr) {
             return res.status(500).json({
                 error: { 
-                    message: 'Certbot is not installed' 
+                    message: 'Certbot is not installed in the frontend container' 
                 }
             });
         }
         
-        const certbotCmd = 'certbot renew --nginx --non-interactive';
+        const certbotCmd = `docker exec ${frontendContainer} certbot renew --nginx --non-interactive`;
         
         console.log('[Certbot] Executing renewal command...');
         

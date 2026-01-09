@@ -60,12 +60,12 @@ router.get('/status', async (req, res) => {
         let certbotAvailable = false;
         let certbotVersion = null;
         try {
-            const { stdout } = await execAsync('certbot --version');
+            const { stdout } = await execAsync('docker exec fireisp-frontend certbot --version');
             certbotVersion = stdout.trim();
             certbotAvailable = true;
             console.log('[System Health] certbot available:', certbotVersion);
         } catch (err) {
-            console.log('[System Health] certbot not available');
+            console.log('[System Health] certbot not available in frontend container');
         }
         
         res.json({ 
@@ -448,21 +448,22 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 console.log(`[Certbot] Domain: ${domain}`);
                 console.log(`[Certbot] Email: ${email}`);
                 
-                // Check if certbot is available
+                // Check if certbot is available in frontend container
+                const frontendContainer = 'fireisp-frontend';
                 try {
-                    await execAsync('certbot --version');
+                    await execAsync(`docker exec ${frontendContainer} certbot --version`);
                 } catch (certbotErr) {
                     return res.status(500).json({
                         error: { 
-                            message: 'Certbot is not installed. Please install it with: apt install certbot python3-certbot-nginx, or choose a different SSL method.' 
+                            message: 'Certbot is not installed in the frontend container. Please rebuild containers with: docker compose build --no-cache frontend && docker compose up -d, or choose a different SSL method.' 
                         }
                     });
                 }
                 
-                // Build certbot command
-                const certbotCmd = `certbot --nginx -d ${domain} --non-interactive --agree-tos --email ${email}`;
+                // Build certbot command to run in frontend container
+                const certbotCmd = `docker exec ${frontendContainer} certbot --nginx -d ${domain} --non-interactive --agree-tos --email ${email}`;
                 
-                console.log('[Certbot] Executing command...');
+                console.log('[Certbot] Executing command in frontend container...');
                 
                 const { stdout, stderr } = await execAsync(certbotCmd, { 
                     timeout: 120000 // 2 minute timeout
