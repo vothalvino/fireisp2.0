@@ -9,6 +9,10 @@ const path = require('path');
 
 const execAsync = promisify(exec);
 
+// Configuration constants
+const FRONTEND_CONTAINER_NAME = process.env.FRONTEND_CONTAINER_NAME || 'fireisp-frontend';
+const CERTBOT_TIMEOUT_MS = parseInt(process.env.CERTBOT_TIMEOUT_MS) || 120000;
+
 router.use(authMiddleware);
 
 // Get all settings
@@ -143,7 +147,7 @@ router.get('/ssl/certbot-check', async (req, res) => {
         console.log('[Certbot] Checking certbot availability...');
         
         // Check if certbot is installed in the frontend container
-        const frontendContainer = 'fireisp-frontend';
+        const frontendContainer = FRONTEND_CONTAINER_NAME;
         try {
             const { stdout } = await execAsync(`docker exec ${frontendContainer} certbot --version`);
             const version = stdout.trim();
@@ -215,7 +219,7 @@ router.post('/ssl/certbot', async (req, res) => {
         console.log(`[Certbot] Dry run: ${dryRun || false}`);
         
         // Check if certbot is available in frontend container
-        const frontendContainer = 'fireisp-frontend';
+        const frontendContainer = FRONTEND_CONTAINER_NAME;
         try {
             await execAsync(`docker exec ${frontendContainer} certbot --version`);
         } catch (certbotErr) {
@@ -238,7 +242,7 @@ router.post('/ssl/certbot', async (req, res) => {
         
         try {
             const { stdout, stderr } = await execAsync(certbotCmd, { 
-                timeout: 120000 // 2 minute timeout
+                timeout: CERTBOT_TIMEOUT_MS // 2 minute timeout
             });
             
             console.log('[Certbot] Output:', stdout);
@@ -348,7 +352,7 @@ router.post('/ssl/certbot-renew', async (req, res) => {
         console.log('[Certbot] Starting certificate renewal...');
         
         // Check if certbot is available in frontend container
-        const frontendContainer = 'fireisp-frontend';
+        const frontendContainer = FRONTEND_CONTAINER_NAME;
         try {
             await execAsync(`docker exec ${frontendContainer} certbot --version`);
         } catch (certbotErr) {
@@ -365,7 +369,7 @@ router.post('/ssl/certbot-renew', async (req, res) => {
         
         try {
             const { stdout, stderr } = await execAsync(certbotCmd, { 
-                timeout: 120000 // 2 minute timeout
+                timeout: CERTBOT_TIMEOUT_MS // 2 minute timeout
             });
             
             console.log('[Certbot] Renewal output:', stdout);

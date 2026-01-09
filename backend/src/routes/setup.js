@@ -12,6 +12,10 @@ const { promisify } = require('util');
 const execAsync = promisify(exec);
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
+// Configuration constants
+const FRONTEND_CONTAINER_NAME = process.env.FRONTEND_CONTAINER_NAME || 'fireisp-frontend';
+const CERTBOT_TIMEOUT_MS = parseInt(process.env.CERTBOT_TIMEOUT_MS) || 120000;
+
 // Let's Encrypt challenge file sync delay (in milliseconds)
 // This delay allows time for the file system and nginx to sync before ACME validation
 const CHALLENGE_FILE_SYNC_DELAY_MS = 1000;
@@ -60,7 +64,7 @@ router.get('/status', async (req, res) => {
         let certbotAvailable = false;
         let certbotVersion = null;
         try {
-            const { stdout } = await execAsync('docker exec fireisp-frontend certbot --version');
+            const { stdout } = await execAsync(`docker exec ${FRONTEND_CONTAINER_NAME} certbot --version`);
             certbotVersion = stdout.trim();
             certbotAvailable = true;
             console.log('[System Health] certbot available:', certbotVersion);
@@ -449,7 +453,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 console.log(`[Certbot] Email: ${email}`);
                 
                 // Check if certbot is available in frontend container
-                const frontendContainer = 'fireisp-frontend';
+                const frontendContainer = FRONTEND_CONTAINER_NAME;
                 try {
                     await execAsync(`docker exec ${frontendContainer} certbot --version`);
                 } catch (certbotErr) {
@@ -466,7 +470,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 console.log('[Certbot] Executing command in frontend container...');
                 
                 const { stdout, stderr } = await execAsync(certbotCmd, { 
-                    timeout: 120000 // 2 minute timeout
+                    timeout: CERTBOT_TIMEOUT_MS
                 });
                 
                 console.log('[Certbot] Output:', stdout);
