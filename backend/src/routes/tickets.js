@@ -118,6 +118,30 @@ router.get('/', async (req, res) => {
     }
 });
 
+// Get ticket statistics
+router.get('/stats/overview', async (req, res) => {
+    try {
+        const stats = await db.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE status = 'open') as open_count,
+                COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_count,
+                COUNT(*) FILTER (WHERE status = 'pending') as pending_count,
+                COUNT(*) FILTER (WHERE status = 'resolved') as resolved_count,
+                COUNT(*) FILTER (WHERE status = 'closed') as closed_count,
+                COUNT(*) FILTER (WHERE priority = 'urgent') as urgent_count,
+                COUNT(*) FILTER (WHERE priority = 'high') as high_count,
+                COUNT(*) FILTER (WHERE client_id IS NULL) as independent_count,
+                COUNT(*) FILTER (WHERE client_id IS NOT NULL) as client_count
+            FROM tickets
+        `);
+        
+        res.json(stats.rows[0]);
+    } catch (error) {
+        console.error('Get ticket stats error:', error);
+        res.status(500).json({ error: { message: 'Failed to get ticket statistics' } });
+    }
+});
+
 // Get single ticket with comments
 router.get('/:id', async (req, res) => {
     try {
@@ -347,30 +371,6 @@ router.post('/:id/comments', async (req, res) => {
     } catch (error) {
         console.error('Add comment error:', error);
         res.status(500).json({ error: { message: 'Failed to add comment' } });
-    }
-});
-
-// Get ticket statistics
-router.get('/stats/overview', async (req, res) => {
-    try {
-        const stats = await db.query(`
-            SELECT 
-                COUNT(*) FILTER (WHERE status = 'open') as open_count,
-                COUNT(*) FILTER (WHERE status = 'in_progress') as in_progress_count,
-                COUNT(*) FILTER (WHERE status = 'pending') as pending_count,
-                COUNT(*) FILTER (WHERE status = 'resolved') as resolved_count,
-                COUNT(*) FILTER (WHERE status = 'closed') as closed_count,
-                COUNT(*) FILTER (WHERE priority = 'urgent') as urgent_count,
-                COUNT(*) FILTER (WHERE priority = 'high') as high_count,
-                COUNT(*) FILTER (WHERE client_id IS NULL) as independent_count,
-                COUNT(*) FILTER (WHERE client_id IS NOT NULL) as client_count
-            FROM tickets
-        `);
-        
-        res.json(stats.rows[0]);
-    } catch (error) {
-        console.error('Get ticket stats error:', error);
-        res.status(500).json({ error: { message: 'Failed to get ticket statistics' } });
     }
 });
 
