@@ -203,8 +203,8 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     challengeCreateFn: async (authz, challenge, keyAuthorization) => {
                         // Store challenge for HTTP-01 validation
                         console.log(`[Let's Encrypt] Creating HTTP-01 challenge for ${authz.identifier.value}`);
-                        console.log(`[Let's Encrypt] Challenge token: ${challenge.token.substring(0, 16)}...`);
-                        console.log(`[Let's Encrypt] Challenge URL: http://${authz.identifier.value}/.well-known/acme-challenge/${challenge.token}`);
+                        console.log(`[Let's Encrypt] Challenge token length: ${challenge.token.length} characters`);
+                        console.log(`[Let's Encrypt] Challenge URL: http://${authz.identifier.value}/.well-known/acme-challenge/[token]`);
                         
                         const challengeDir = path.join(sslDir, '.well-known', 'acme-challenge');
                         await fs.mkdir(challengeDir, { recursive: true });
@@ -222,7 +222,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                         // Verify file was created successfully
                         try {
                             const fileStats = await fs.stat(challengeFilePath);
-                            console.log(`[Let's Encrypt] Challenge file created successfully at: ${challengeFilePath}`);
+                            console.log(`[Let's Encrypt] Challenge file created successfully`);
                             console.log(`[Let's Encrypt] File size: ${fileStats.size} bytes, permissions: ${(fileStats.mode & parseInt('777', 8)).toString(8)}`);
                         } catch (statErr) {
                             console.error(`[Let's Encrypt] ERROR: Challenge file verification failed:`, statErr);
@@ -240,7 +240,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                         const challengeFile = path.join(sslDir, '.well-known', 'acme-challenge', challenge.token);
                         try {
                             await fs.unlink(challengeFile);
-                            console.log(`[Let's Encrypt] Challenge file removed: ${challenge.token.substring(0, 16)}...`);
+                            console.log(`[Let's Encrypt] Challenge file removed successfully`);
                         } catch (err) {
                             // Ignore error if file doesn't exist (ENOENT)
                             if (err.code !== 'ENOENT') {
