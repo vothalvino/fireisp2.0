@@ -72,8 +72,8 @@ app.listen(PORT, '0.0.0.0', () => {
         console.error('[System Health] WARNING: acme-client package is NOT installed!');
         console.error('[System Health] Let\'s Encrypt SSL certificate functionality will NOT work.');
         console.error('[System Health] To fix this, rebuild the Docker containers:');
-        console.error('[System Health]   docker-compose build --no-cache backend');
-        console.error('[System Health]   docker-compose up -d');
+        console.error('[System Health]   docker compose build --no-cache backend');
+        console.error('[System Health]   docker compose up -d');
         console.error('═'.repeat(80));
     }
 });

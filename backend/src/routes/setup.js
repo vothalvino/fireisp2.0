@@ -165,7 +165,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                     console.error('[Let\'s Encrypt] This typically means the Docker container needs to be rebuilt');
                     return res.status(500).json({
                         error: { 
-                            message: 'Let\'s Encrypt functionality is not available. The acme-client package is missing. Please rebuild the Docker containers with: docker-compose build --no-cache backend && docker-compose up -d' 
+                            message: 'Let\'s Encrypt functionality is not available. The acme-client package is missing. Please rebuild the Docker containers with: docker compose build --no-cache backend && docker compose up -d' 
                         }
                     });
                 }
