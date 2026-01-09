@@ -177,16 +177,18 @@ function Clients() {
                 />
               </div>
               
-              <div>
-                <label>Contact Person *</label>
-                <input
-                  type="text"
-                  name="contactPerson"
-                  value={formData.contactPerson}
-                  onChange={handleInputChange}
-                  required
-                />
-              </div>
+              {formData.clientType === 'company' && (
+                <div>
+                  <label>Contact Person *</label>
+                  <input
+                    type="text"
+                    name="contactPerson"
+                    value={formData.contactPerson}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              )}
               
               <div>
                 <label>Email *</label>
@@ -327,7 +329,7 @@ function Clients() {
               <tr>
                 <th>Client Code</th>
                 <th>Type</th>
-                <th>Company</th>
+                <th>Name</th>
                 <th>Contact Person</th>
                 <th>Email</th>
                 <th>Phone</th>
@@ -350,7 +352,7 @@ function Clients() {
                     </span>
                   </td>
                   <td>{client.company_name}</td>
-                  <td>{client.contact_person}</td>
+                  <td>{(client.client_type || 'company') === 'company' ? client.contact_person : 'N/A'}</td>
                   <td>{client.email}</td>
                   <td>{client.phone}</td>
                   <td>{client.service_count}</td>

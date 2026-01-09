@@ -217,10 +217,12 @@ function ClientDashboard() {
                       {client.client_type || 'company'}
                     </span>
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', marginBottom: '5px' }}>Contact Person</label>
-                    <p style={{ fontWeight: '500' }}>{client.contact_person}</p>
-                  </div>
+                  {(client.client_type || 'company') === 'company' && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', color: '#64748b', marginBottom: '5px' }}>Contact Person</label>
+                      <p style={{ fontWeight: '500' }}>{client.contact_person}</p>
+                    </div>
+                  )}
                   <div>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.75rem', color: '#64748b', marginBottom: '5px' }}>
                       <Mail size={14} /> Email
