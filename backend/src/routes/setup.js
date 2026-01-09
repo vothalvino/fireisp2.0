@@ -316,8 +316,9 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                 let troubleshootingSteps = [];
                 
                 // Sanitize domain for safe display in error messages
-                // Only allow alphanumeric, dots, and hyphens
-                const safeDomain = domain.replace(/[^a-zA-Z0-9.-]/g, '');
+                // Validate domain format and only allow valid domain characters
+                const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+                const safeDomain = domainRegex.test(domain) ? domain : '[invalid-domain]';
                 
                 // Provide more helpful error messages for common issues
                 // Check for specific error patterns more carefully to avoid false positives

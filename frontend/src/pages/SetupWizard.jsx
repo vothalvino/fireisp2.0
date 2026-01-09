@@ -204,7 +204,7 @@ function SetupWizard({ onComplete }) {
             </div>
 
             {/* Let's Encrypt availability warning */}
-            {setupStatus && !setupStatus.letsEncryptAvailable && (
+            {setupStatus?.letsEncryptAvailable === false && (
               <div className="warning-box">
                 <AlertCircle size={20} />
                 <div>
@@ -229,11 +229,11 @@ function SetupWizard({ onComplete }) {
 
             {sslConfig.enabled && (
               <>
-                <div className="form-group">
-                  <label className="form-label">SSL Method</label>
-                  {(() => {
-                    const isLetsEncryptUnavailable = setupStatus && !setupStatus.letsEncryptAvailable;
-                    return (
+                {(() => {
+                  const isLetsEncryptUnavailable = setupStatus && !setupStatus.letsEncryptAvailable;
+                  return (
+                    <div className="form-group">
+                      <label className="form-label">SSL Method</label>
                       <select
                         value={sslConfig.method}
                         onChange={(e) => setSslConfig({ ...sslConfig, method: e.target.value })}
@@ -244,14 +244,14 @@ function SetupWizard({ onComplete }) {
                         </option>
                         <option value="manual">Manual Certificate Upload</option>
                       </select>
-                    );
-                  })()}
-                  <p className="form-help">
-                    {sslConfig.method === 'letsencrypt' 
-                      ? "Let's Encrypt will automatically obtain and configure a free SSL certificate for your domain."
-                      : "Upload your own SSL certificate and private key in PEM format."}
-                  </p>
-                </div>
+                      <p className="form-help">
+                        {sslConfig.method === 'letsencrypt' 
+                          ? "Let's Encrypt will automatically obtain and configure a free SSL certificate for your domain."
+                          : "Upload your own SSL certificate and private key in PEM format."}
+                      </p>
+                    </div>
+                  );
+                })()}
 
                 {sslConfig.method === 'letsencrypt' ? (
                   <>
@@ -304,7 +304,7 @@ function SetupWizard({ onComplete }) {
                       <textarea
                         rows="6"
                         required
-                        placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
+                        placeholder={"-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"}
                         value={sslConfig.certificate}
                         onChange={(e) => setSslConfig({ ...sslConfig, certificate: e.target.value })}
                       />
@@ -318,7 +318,7 @@ function SetupWizard({ onComplete }) {
                       <textarea
                         rows="6"
                         required
-                        placeholder="-----BEGIN PRIVATE KEY-----&#10;...&#10;-----END PRIVATE KEY-----"
+                        placeholder={"-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"}
                         value={sslConfig.privateKey}
                         onChange={(e) => setSslConfig({ ...sslConfig, privateKey: e.target.value })}
                       />
