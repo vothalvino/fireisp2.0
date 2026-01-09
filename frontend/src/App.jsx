@@ -5,6 +5,7 @@ import SetupWizard from './pages/SetupWizard';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
+import ClientDashboard from './pages/ClientDashboard';
 import Services from './pages/Services';
 import Radius from './pages/Radius';
 import Invoices from './pages/Invoices';
@@ -66,6 +67,7 @@ function App() {
         }>
           <Route index element={<Dashboard />} />
           <Route path="clients" element={<Clients />} />
+          <Route path="clients/:id" element={<ClientDashboard />} />
           <Route path="services" element={<Services />} />
           <Route path="radius" element={<Radius />} />
           <Route path="invoices" element={<Invoices />} />

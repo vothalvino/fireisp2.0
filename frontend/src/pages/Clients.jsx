@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { clientService } from '../services/api';
 import { Users, Plus, Edit, Trash2 } from 'lucide-react';
 
 function Clients() {
+  const navigate = useNavigate();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -66,7 +68,8 @@ function Clients() {
     }
   };
 
-  const handleEdit = (client) => {
+  const handleEdit = (client, e) => {
+    e.stopPropagation(); // Prevent row click when editing
     setSelectedClient(client);
     setFormData({
       clientCode: client.client_code,
@@ -87,7 +90,8 @@ function Clients() {
     setShowForm(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, e) => {
+    e.stopPropagation(); // Prevent row click when deleting
     if (!confirm('Are you sure you want to delete this client?')) return;
     
     try {
@@ -334,7 +338,13 @@ function Clients() {
             </thead>
             <tbody>
               {clients.map((client) => (
-                <tr key={client.id}>
+                <tr 
+                  key={client.id}
+                  onClick={() => navigate(`/clients/${client.id}`)}
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
                   <td>{client.client_code}</td>
                   <td>
                     <span className={`badge badge-${(client.client_type || 'company') === 'company' ? 'info' : 'secondary'}`}>
@@ -355,14 +365,14 @@ function Clients() {
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button
                         className="btn btn-sm"
-                        onClick={() => handleEdit(client)}
+                        onClick={(e) => handleEdit(client, e)}
                         title="Edit"
                       >
                         <Edit size={16} />
                       </button>
                       <button
                         className="btn btn-sm btn-danger"
-                        onClick={() => handleDelete(client.id)}
+                        onClick={(e) => handleDelete(client.id, e)}
                         title="Delete"
                       >
                         <Trash2 size={16} />
