@@ -137,4 +137,13 @@ export const documentService = {
   delete: (clientId, documentId) => api.delete(`/documents/${clientId}/${documentId}`),
 };
 
+export const paymentService = {
+  getUnpaidInvoices: (clientId) => api.get(`/payments/client/${clientId}/unpaid-invoices`),
+  getClientCredit: (clientId) => api.get(`/payments/client/${clientId}/credit`),
+  registerPayment: (data) => api.post('/payments', data),
+  getPaymentHistory: (clientId, params) => api.get(`/payments/client/${clientId}/history`, { params }),
+  getPayment: (id) => api.get(`/payments/${id}`),
+  getAll: (params) => api.get('/payments', { params }),
+};
+
 export default api;
