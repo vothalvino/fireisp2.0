@@ -43,7 +43,14 @@ function Clients() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+      // Clear contactPerson when switching to personal client type
+      if (name === 'clientType' && value === 'personal') {
+        updated.contactPerson = '';
+      }
+      return updated;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -185,7 +192,7 @@ function Clients() {
                     name="contactPerson"
                     value={formData.contactPerson}
                     onChange={handleInputChange}
-                    required
+                    required={formData.clientType === 'company'}
                   />
                 </div>
               )}
