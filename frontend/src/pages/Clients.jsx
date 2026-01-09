@@ -192,7 +192,7 @@ function Clients() {
                     name="contactPerson"
                     value={formData.contactPerson}
                     onChange={handleInputChange}
-                    required={formData.clientType === 'company'}
+                    required
                   />
                 </div>
               )}
