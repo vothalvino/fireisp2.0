@@ -9,6 +9,10 @@ const acme = require('acme-client');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 
+// Let's Encrypt challenge file sync delay (in milliseconds)
+// This delay allows time for the file system and nginx to sync before ACME validation
+const CHALLENGE_FILE_SYNC_DELAY_MS = 1000;
+
 // Middleware to check if setup is not completed
 // Prevents abuse of setup endpoints after initial configuration
 async function requireSetupNotCompleted(req, res, next) {
@@ -191,12 +195,14 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                         console.log(`[Let's Encrypt] Creating HTTP-01 challenge for ${authz.identifier.value}`);
                         const challengeDir = path.join(sslDir, '.well-known', 'acme-challenge');
                         await fs.mkdir(challengeDir, { recursive: true });
-                        await fs.writeFile(
-                            path.join(challengeDir, challenge.token),
-                            keyAuthorization
-                        );
+                        const challengeFilePath = path.join(challengeDir, challenge.token);
+                        await fs.writeFile(challengeFilePath, keyAuthorization);
+                        // Set proper permissions for nginx to read
+                        await fs.chmod(challengeFilePath, 0o644);
                         // Log truncated token for security (avoid exposing full token in logs)
                         console.log(`[Let's Encrypt] Challenge file created: ${challenge.token.substring(0, 16)}...`);
+                        // Give time for the file system and nginx to sync
+                        await new Promise(resolve => setTimeout(resolve, CHALLENGE_FILE_SYNC_DELAY_MS));
                     },
                     challengeRemoveFn: async (authz, challenge) => {
                         // Clean up challenge file
@@ -208,7 +214,7 @@ router.post('/ssl', requireSetupNotCompleted, async (req, res) => {
                         } catch (err) {
                             // Ignore error if file doesn't exist (ENOENT)
                             if (err.code !== 'ENOENT') {
-                                console.error('Error removing challenge file:', err);
+                                console.error('[Let\'s Encrypt] Error removing challenge file:', err);
                             }
                         }
                     }
