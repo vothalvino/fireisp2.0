@@ -38,7 +38,8 @@ function Payments() {
         return sum + amount;
       }, 0);
     
-    if (!formData.amount || formData.amount === '0') {
+    const currentAmount = parseFloat(formData.amount);
+    if (!formData.amount || currentAmount === 0 || isNaN(currentAmount)) {
       setFormData(prev => ({ ...prev, amount: total.toFixed(2) }));
     }
   }, [selectedInvoices]);
@@ -135,18 +136,22 @@ function Payments() {
     const totals = calculateTotals();
     const paymentAmount = parseFloat(formData.amount);
     
-    if (paymentAmount <= 0) {
-      alert('Payment amount must be greater than zero');
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+      alert('Payment amount must be a valid number greater than zero');
       return;
     }
     
     // Build invoice allocations from selected invoices
     const invoiceAllocations = Object.keys(selectedInvoices)
       .filter(id => selectedInvoices[id].selected)
-      .map(id => ({
-        invoiceId: id,
-        amount: parseFloat(selectedInvoices[id].amount)
-      }));
+      .map(id => {
+        const amount = parseFloat(selectedInvoices[id].amount || 0);
+        return {
+          invoiceId: id,
+          amount: isNaN(amount) ? 0 : amount
+        };
+      })
+      .filter(allocation => allocation.amount > 0); // Only include valid positive amounts
     
     try {
       const paymentData = {

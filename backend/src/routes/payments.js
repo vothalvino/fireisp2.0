@@ -94,7 +94,10 @@ router.post('/', async (req, res) => {
         // If there are invoice allocations, create them
         if (invoiceAllocations && invoiceAllocations.length > 0) {
             for (const allocation of invoiceAllocations) {
-                if (allocation.amount <= 0) {
+                const allocationAmount = parseFloat(allocation.amount);
+                
+                // Skip invalid or non-positive amounts
+                if (isNaN(allocationAmount) || allocationAmount <= 0) {
                     continue;
                 }
                 
@@ -117,17 +120,17 @@ router.post('/', async (req, res) => {
                 const amountDue = parseFloat(invoice.amount_due);
                 
                 // Ensure we don't allocate more than what's due
-                const allocationAmount = Math.min(parseFloat(allocation.amount), amountDue);
+                const finalAllocationAmount = Math.min(allocationAmount, amountDue);
                 
-                if (allocationAmount > 0) {
+                if (finalAllocationAmount > 0) {
                     // Create payment allocation
                     await client.query(
                         `INSERT INTO payment_allocations (payment_id, invoice_id, amount)
                          VALUES ($1, $2, $3)`,
-                        [paymentId, allocation.invoiceId, allocationAmount]
+                        [paymentId, allocation.invoiceId, finalAllocationAmount]
                     );
                     
-                    totalAllocated += allocationAmount;
+                    totalAllocated += finalAllocationAmount;
                 }
             }
         }
