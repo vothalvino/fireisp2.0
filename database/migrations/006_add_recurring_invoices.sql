@@ -9,8 +9,8 @@ ON CONFLICT (key) DO NOTHING;
 
 -- Add per-service billing configuration to client_services table
 ALTER TABLE client_services 
-ADD COLUMN IF NOT EXISTS billing_day_of_month INTEGER,
-ADD COLUMN IF NOT EXISTS days_until_due INTEGER,
+ADD COLUMN IF NOT EXISTS billing_day_of_month INTEGER CHECK (billing_day_of_month IS NULL OR (billing_day_of_month >= 1 AND billing_day_of_month <= 28)),
+ADD COLUMN IF NOT EXISTS days_until_due INTEGER CHECK (days_until_due IS NULL OR (days_until_due >= 1 AND days_until_due <= 90)),
 ADD COLUMN IF NOT EXISTS recurring_billing_enabled BOOLEAN DEFAULT true;
 
 -- Add comments to explain the fields

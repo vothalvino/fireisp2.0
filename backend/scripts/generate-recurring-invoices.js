@@ -97,16 +97,14 @@ async function generateRecurringInvoices() {
             dueDate.setDate(dueDate.getDate() + service.effective_days_until_due);
             const dueDateStr = dueDate.toISOString().split('T')[0];
             
-            // Generate invoice number
-            const invoiceNumberResult = await client.query(
-                `SELECT COUNT(*) as count FROM invoices 
-                 WHERE EXTRACT(YEAR FROM issue_date) = EXTRACT(YEAR FROM CURRENT_DATE)`
-            );
-            const yearlyCount = parseInt(invoiceNumberResult.rows[0].count) + 1;
-            const invoiceNumber = `INV-${today.getFullYear()}-${String(yearlyCount).padStart(5, '0')}`;
+            // Generate unique invoice number using timestamp and service ID
+            // This prevents race conditions and ensures uniqueness
+            const timestamp = Date.now().toString().slice(-6);
+            const serviceIdShort = service.id.toString().slice(0, 8);
+            const invoiceNumber = `INV-${today.getFullYear()}-${timestamp}-${serviceIdShort}`;
             
             const subtotal = parseFloat(service.price);
-            const tax = subtotal * 0; // No tax for now
+            const tax = subtotal * 0; // TODO: Make tax configurable via system settings
             const total = subtotal + tax;
             
             const description = `${service.plan_name} - ${service.billing_cycle} billing`;
