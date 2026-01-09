@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { invoiceService, clientService } from '../services/api';
 import { FileText, Plus, Eye, Trash2, DollarSign } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 function Invoices() {
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -369,9 +371,14 @@ function Invoices() {
           <h1><FileText size={32} /> Invoices</h1>
           <p>Manage billing and invoices</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-          <Plus size={20} /> Create Invoice
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn" onClick={() => navigate('/payments')}>
+            <DollarSign size={20} /> Register Payment
+          </button>
+          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+            <Plus size={20} /> Create Invoice
+          </button>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: '20px' }}>
