@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ticketService, clientService, userService } from '../services/api';
 import { Ticket, Plus, Eye, Trash2, MessageSquare, AlertCircle, Clock, CheckCircle2 } from 'lucide-react';
 
 function Tickets() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
@@ -14,6 +17,7 @@ function Tickets() {
   const [priorityFilter, setPriorityFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [stats, setStats] = useState(null);
+  const [loadingTicketFromNav, setLoadingTicketFromNav] = useState(false);
   const [formData, setFormData] = useState({
     clientId: '',
     title: '',
@@ -27,6 +31,29 @@ function Tickets() {
   useEffect(() => {
     loadData();
   }, [filter, priorityFilter, typeFilter]);
+
+  // Handle ticket navigation from ClientDashboard
+  useEffect(() => {
+    const loadTicketFromNavigation = async () => {
+      if (location.state?.ticketId && !loadingTicketFromNav) {
+        setLoadingTicketFromNav(true);
+        try {
+          const response = await ticketService.getOne(location.state.ticketId);
+          setSelectedTicket(response.data);
+          setShowDetails(true);
+          // Clear the state to prevent re-triggering
+          navigate('/tickets', { replace: true });
+        } catch (error) {
+          console.error('Failed to load ticket from navigation:', error);
+        } finally {
+          setLoadingTicketFromNav(false);
+        }
+      }
+    };
+    
+    loadTicketFromNavigation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   const loadData = async () => {
     try {

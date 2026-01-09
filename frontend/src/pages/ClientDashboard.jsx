@@ -343,11 +343,8 @@ function ClientDashboard() {
               {tickets.map((ticket) => (
                 <div 
                   key={ticket.id}
-                  style={{ 
-                    padding: '12px', 
-                    border: '1px solid #e2e8f0', 
-                    borderRadius: '8px'
-                  }}
+                  onClick={() => navigate('/tickets', { state: { ticketId: ticket.id } })}
+                  className="ticket-card-clickable"
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '8px' }}>
                     <strong>{ticket.title}</strong>
