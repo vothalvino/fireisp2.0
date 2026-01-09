@@ -26,8 +26,8 @@ RUN npm run build
 
 # Frontend nginx stage
 FROM nginx:alpine AS frontend
-# Install openssl for SSL certificate generation
-RUN apk add --no-cache openssl
+# Install openssl for SSL certificate generation and certbot for Let's Encrypt
+RUN apk add --no-cache openssl certbot certbot-nginx
 COPY --from=frontend-builder /app/dist /usr/share/nginx/html
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

@@ -105,6 +105,9 @@ export const settingsService = {
   create: (data) => api.post('/settings', data),
   bulkUpdate: (data) => api.post('/settings/bulk', data),
   delete: (key) => api.delete(`/settings/${key}`),
+  checkCertbot: () => api.get('/settings/ssl/certbot-check'),
+  configureCertbot: (data) => api.post('/settings/ssl/certbot', data),
+  renewCertbot: () => api.post('/settings/ssl/certbot-renew'),
 };
 
 export default api;

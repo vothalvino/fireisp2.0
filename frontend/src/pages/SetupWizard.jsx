@@ -231,6 +231,7 @@ function SetupWizard({ onComplete }) {
               <>
                 {(() => {
                   const isLetsEncryptUnavailable = setupStatus && !setupStatus.letsEncryptAvailable;
+                  const isCertbotAvailable = setupStatus && setupStatus.certbotAvailable;
                   return (
                     <div className="form-group">
                       <label className="form-label">SSL Method</label>
@@ -240,22 +241,27 @@ function SetupWizard({ onComplete }) {
                         className="form-select"
                       >
                         <option value="letsencrypt" disabled={isLetsEncryptUnavailable}>
-                          Let's Encrypt (Automatic){isLetsEncryptUnavailable ? ' - Not Available' : ''}
+                          Let's Encrypt (Automatic - acme-client){isLetsEncryptUnavailable ? ' - Not Available' : ''}
+                        </option>
+                        <option value="certbot" disabled={!isCertbotAvailable}>
+                          Certbot (nginx plugin){!isCertbotAvailable ? ' - Not Installed' : ''}
                         </option>
                         <option value="manual">Manual Certificate Upload</option>
                       </select>
                       <p className="form-help">
                         {sslConfig.method === 'letsencrypt' 
-                          ? "Let's Encrypt will automatically obtain and configure a free SSL certificate for your domain."
+                          ? "Let's Encrypt with acme-client will automatically obtain and configure a free SSL certificate for your domain."
+                          : sslConfig.method === 'certbot'
+                          ? "Certbot with nginx plugin will automatically obtain and configure a free SSL certificate for your domain."
                           : "Upload your own SSL certificate and private key in PEM format."}
                       </p>
                     </div>
                   );
                 })()}
 
-                {sslConfig.method === 'letsencrypt' ? (
+                {(sslConfig.method === 'letsencrypt' || sslConfig.method === 'certbot') ? (
                   <>
-                    {/* Let's Encrypt Requirements */}
+                    {/* Let's Encrypt / Certbot Requirements */}
                     <div className="requirements-box">
                       <strong>Before proceeding, ensure:</strong>
                       <ul>
