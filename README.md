@@ -13,6 +13,7 @@ Modern ISP Management System with Docker containerization, CRM functionality, mu
 - 🔌 **FreeRADIUS Integration** - Built-in RADIUS server with Mikrotik support
 - 🎨 **Modern Web UI** - React-based responsive interface with full GUI coverage
 - 💰 **Invoice Management** - Complete billing and payment tracking system
+- 🎫 **Ticket System** - Support tickets for clients and independent job tracking
 - 👥 **Multi-User Support** - User management with role-based access control
 - ⚙️ **System Settings** - Web-based configuration for all system parameters
 - 🔒 **Secure** - JWT authentication, optional SSL/HTTPS support
@@ -264,6 +265,28 @@ See [SSL_SIMPLIFIED_GUIDE.md](SSL_SIMPLIFIED_GUIDE.md) for a practical, step-by-
    - Add payment with amount and method
    - Invoice status auto-updates when fully paid
 
+### Managing Tickets
+
+1. Navigate to **Tickets** section
+2. Click **Create Ticket**
+3. Choose ticket type:
+   - **Client-linked ticket**: Select a client for support issues
+   - **Independent ticket**: Leave client empty for internal jobs
+4. Fill in ticket details:
+   - Title and description
+   - Type (Support, Maintenance, Installation, Other)
+   - Priority (Low, Medium, High, Urgent)
+   - Assign to user
+5. Track ticket progress:
+   - View ticket details and history
+   - Add comments for communication
+   - Update status (Open, In Progress, Pending, Resolved, Closed)
+   - Change assignment as needed
+6. Use filters to find tickets:
+   - Filter by status, priority, or type
+   - View statistics dashboard
+   - Track independent vs. client tickets
+
 ### Managing Users
 
 1. Go to **Users** section
@@ -303,9 +326,11 @@ The system includes organized tables for:
 - **Invoices** - Invoice headers with client and dates
 - **Invoice Items** - Line items for each invoice
 - **Payments** - Payment records linked to invoices
+- **Tickets** - Support tickets for clients and independent jobs
+- **Ticket Comments** - Comment threads for ticket communication
 - **System Settings** - Key-value configuration store
 
-**Total:** 13+ tables with full web GUI access for all operations.
+**Total:** 15+ tables with full web GUI access for all operations.
 
 ## Management Commands
 
