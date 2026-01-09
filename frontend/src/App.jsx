@@ -8,6 +8,7 @@ import Clients from './pages/Clients';
 import Services from './pages/Services';
 import Radius from './pages/Radius';
 import Invoices from './pages/Invoices';
+import Tickets from './pages/Tickets';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
 import Layout from './components/Layout';
@@ -68,6 +69,7 @@ function App() {
           <Route path="services" element={<Services />} />
           <Route path="radius" element={<Radius />} />
           <Route path="invoices" element={<Invoices />} />
+          <Route path="tickets" element={<Tickets />} />
           <Route path="users" element={<Users />} />
           <Route path="settings" element={<Settings />} />
         </Route>

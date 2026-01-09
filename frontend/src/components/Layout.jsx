@@ -1,5 +1,5 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Package, Radio, FileText, UserCog, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Package, Radio, FileText, UserCog, Settings, LogOut, Ticket } from 'lucide-react';
 import './Layout.css';
 
 function Layout() {
@@ -17,6 +17,7 @@ function Layout() {
     { path: '/services', icon: Package, label: 'Services' },
     { path: '/radius', icon: Radio, label: 'RADIUS' },
     { path: '/invoices', icon: FileText, label: 'Invoices' },
+    { path: '/tickets', icon: Ticket, label: 'Tickets' },
     { path: '/users', icon: UserCog, label: 'Users' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];

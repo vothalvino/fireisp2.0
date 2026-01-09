@@ -110,4 +110,14 @@ export const settingsService = {
   renewCertbot: () => api.post('/settings/ssl/certbot-renew'),
 };
 
+export const ticketService = {
+  getAll: (params) => api.get('/tickets', { params }),
+  getOne: (id) => api.get(`/tickets/${id}`),
+  create: (data) => api.post('/tickets', data),
+  update: (id, data) => api.put(`/tickets/${id}`, data),
+  delete: (id) => api.delete(`/tickets/${id}`),
+  addComment: (id, data) => api.post(`/tickets/${id}/comments`, data),
+  getStats: () => api.get('/tickets/stats/overview'),
+};
+
 export default api;
