@@ -16,10 +16,6 @@ function ClientDashboard() {
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadClientData();
-  }, [id]);
-
   const loadClientData = async () => {
     try {
       const [clientRes, servicesRes, invoicesRes, ticketsRes, sessionsRes] = await Promise.all([
@@ -47,6 +43,11 @@ function ClientDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadClientData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const formatBytes = (bytes) => {
     if (!bytes || bytes === 0) return '0 Bytes';
