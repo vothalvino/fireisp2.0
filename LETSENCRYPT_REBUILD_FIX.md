@@ -6,7 +6,7 @@ If Let's Encrypt is still failing after previous fixes were applied, the most co
 
 ## Why This Happens
 
-Docker containers are built once and then reused. When code changes are pulled from git (like the Let's Encrypt fixes in PR #21), the container needs to be **rebuilt** to include new dependencies or code changes. Simply restarting containers (`docker-compose restart` or `docker-compose up -d`) does NOT rebuild them.
+Docker containers are built once and then reused. When code changes are pulled from git (like the Let's Encrypt fixes in PR #21), the container needs to be **rebuilt** to include new dependencies or code changes. Simply restarting containers (`docker compose restart` or `docker compose up -d`) does NOT rebuild them.
 
 ## The Solution: Rebuild Docker Containers
 
@@ -16,7 +16,7 @@ The backend container contains the `acme-client` package needed for Let's Encryp
 
 ```bash
 cd /opt/fireisp  # Or your installation directory
-docker-compose build --no-cache backend
+docker compose build --no-cache backend
 ```
 
 The `--no-cache` flag ensures Docker doesn't use cached layers and installs all dependencies fresh.
@@ -24,7 +24,7 @@ The `--no-cache` flag ensures Docker doesn't use cached layers and installs all 
 ### Step 2: Restart All Services
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Step 3: Verify the Fix
@@ -32,7 +32,7 @@ docker-compose up -d
 Check that `acme-client` is now available:
 
 ```bash
-docker-compose logs backend | grep -i acme
+docker compose logs backend | grep -i acme
 ```
 
 You should see a message like:
@@ -68,10 +68,10 @@ If the above steps don't work, try a complete rebuild:
 
 ```bash
 cd /opt/fireisp
-docker-compose down                      # Stop and remove containers
-docker-compose build --no-cache          # Rebuild ALL containers
-docker-compose up -d                     # Start containers
-docker-compose logs backend | grep acme  # Verify
+docker compose down                      # Stop and remove containers
+docker compose build --no-cache          # Rebuild ALL containers
+docker compose up -d                     # Start containers
+docker compose logs backend | grep acme  # Verify
 ```
 
 ## Verify Installation Locally
@@ -122,8 +122,8 @@ To avoid this issue in the future:
 ```bash
 cd /opt/fireisp
 git pull
-docker-compose build --no-cache  # Always rebuild
-docker-compose up -d
+docker compose build --no-cache  # Always rebuild
+docker compose up -d
 ```
 
 ### After Every Update
@@ -140,24 +140,24 @@ The `update.sh` script automatically rebuilds containers, so using it is the saf
 ❌ **DON'T do this:**
 ```bash
 git pull
-docker-compose up -d  # Missing the build step!
+docker compose up -d  # Missing the build step!
 ```
 
 ✅ **DO this:**
 ```bash
 git pull
-docker-compose build --no-cache
-docker-compose up -d
+docker compose build --no-cache
+docker compose up -d
 ```
 
 ❌ **DON'T do this:**
 ```bash
-docker-compose build  # Without --no-cache, may use cached layers
+docker compose build  # Without --no-cache, may use cached layers
 ```
 
 ✅ **DO this:**
 ```bash
-docker-compose build --no-cache  # Forces fresh build
+docker compose build --no-cache  # Forces fresh build
 ```
 
 ## Still Having Issues?
@@ -179,12 +179,12 @@ If rebuilding doesn't fix the problem, check:
 
 3. **Build logs** - Check for errors during build:
    ```bash
-   docker-compose build --no-cache backend 2>&1 | tee build.log
+   docker compose build --no-cache backend 2>&1 | tee build.log
    ```
 
 4. **Network issues** - If npm can't download packages, check internet connectivity:
    ```bash
-   docker-compose build backend 2>&1 | grep -i "error"
+   docker compose build backend 2>&1 | grep -i "error"
    ```
 
 ## Summary
@@ -195,9 +195,9 @@ If rebuilding doesn't fix the problem, check:
 
 ```bash
 cd /opt/fireisp
-docker-compose build --no-cache backend
-docker-compose up -d
-docker-compose logs backend | grep acme  # Verify success
+docker compose build --no-cache backend
+docker compose up -d
+docker compose logs backend | grep acme  # Verify success
 ```
 
 Then proceed with Let's Encrypt configuration as normal.

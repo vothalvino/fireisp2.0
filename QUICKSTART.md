@@ -134,8 +134,8 @@ sudo ./update.sh
 **IMPORTANT**: After updating, always rebuild the Docker containers to ensure all dependencies are current:
 ```bash
 cd /opt/fireisp
-docker-compose build --no-cache
-docker-compose up -d
+docker compose build --no-cache
+docker compose up -d
 ```
 
 For detailed update instructions, see [UPDATE.md](UPDATE.md)
@@ -171,10 +171,12 @@ radtest username password YOUR_FIREISP_IP 0 YOUR_RADIUS_SECRET
 **First, ensure Docker containers are built with latest dependencies:**
 ```bash
 cd /opt/fireisp
-docker-compose build --no-cache backend
-docker-compose up -d
-docker-compose logs backend | grep acme
+docker compose build --no-cache backend
+docker compose up -d
+docker compose logs backend | grep acme
 ```
+
+**For detailed rebuild instructions, see [LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)**
 
 See the comprehensive **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** guide.
 

@@ -8,19 +8,21 @@ This guide helps diagnose and fix common issues when configuring Let's Encrypt S
 
 ```bash
 cd /opt/fireisp  # Or your installation directory
-docker-compose build --no-cache backend
-docker-compose up -d
+docker compose build --no-cache backend
+docker compose up -d
 ```
 
 This ensures the `acme-client` package is properly installed. Check the backend logs after restart:
 
 ```bash
-docker-compose logs backend | grep -i acme
+docker compose logs backend | grep -i acme
 ```
 
 You should see: `[System Health] acme-client vX.X.X is available - Let's Encrypt functionality enabled`
 
 If you see a WARNING message instead, the acme-client is not installed and Let's Encrypt will not work.
+
+**For detailed rebuild instructions, see [LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)**
 
 ## Prerequisites Checklist
 
@@ -60,13 +62,13 @@ Before attempting Let's Encrypt configuration, ensure ALL of the following are m
 1. **Rebuild the backend container** (REQUIRED):
    ```bash
    cd /opt/fireisp
-   docker-compose build --no-cache backend
-   docker-compose up -d
+   docker compose build --no-cache backend
+   docker compose up -d
    ```
 
 2. **Verify the package is installed**:
    ```bash
-   docker-compose logs backend | grep -i "acme-client"
+   docker compose logs backend | grep -i "acme-client"
    ```
    
    Expected output: `[System Health] acme-client v5.4.0 is available`
@@ -77,6 +79,8 @@ Before attempting Let's Encrypt configuration, ensure ALL of the following are m
    ```
    
    Should include: `"letsEncryptAvailable": true`
+
+**For detailed rebuild instructions, see [LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)**
 
 ### Issue 1: "Challenge validation failed" or "Invalid response"
 

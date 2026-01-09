@@ -387,6 +387,7 @@ cat backup.sql | docker-compose exec -T postgres psql -U fireisp fireisp
 - **[CHANGELOG.md](CHANGELOG.md)** - Version history and changes
 - **[QUICKSTART.md](QUICKSTART.md)** - Quick start guide
 - **[MIKROTIK.md](MIKROTIK.md)** - Mikrotik integration guide
+- **[LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)** - Fix for "Let's Encrypt still failing" issues
 - **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** - Let's Encrypt troubleshooting and debugging
 - **[LETSENCRYPT_TESTING.md](LETSENCRYPT_TESTING.md)** - Let's Encrypt integration testing guide
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines
@@ -400,16 +401,18 @@ If you're having trouble configuring Let's Encrypt SSL certificates, **first reb
 
 ```bash
 cd /opt/fireisp
-docker-compose build --no-cache backend
-docker-compose up -d
+docker compose build --no-cache backend
+docker compose up -d
 ```
 
 Then verify acme-client is installed:
 ```bash
-docker-compose logs backend | grep acme
+docker compose logs backend | grep acme
 ```
 
 You should see: `[System Health] acme-client vX.X.X is available`
+
+**For detailed rebuild instructions, see [LETSENCRYPT_REBUILD_FIX.md](LETSENCRYPT_REBUILD_FIX.md)**
 
 See the comprehensive **[LETSENCRYPT_TROUBLESHOOTING.md](LETSENCRYPT_TROUBLESHOOTING.md)** guide which covers:
 
