@@ -12,7 +12,17 @@ function handleDatabaseError(error, operation, res) {
     
     // Handle specific error cases with detailed messages
     if (error.code === '23505') {
-        return res.status(400).json({ error: { message: 'Username already exists. Please use a different username.' } });
+        // Check if it's a username constraint violation
+        if (error.constraint === 'client_services_username_key' || error.detail?.includes('username')) {
+            return res.status(400).json({ error: { message: 'Username already exists. Please use a different username.' } });
+        }
+        // Generic constraint violation message
+        return res.status(400).json({ 
+            error: { 
+                message: 'Duplicate value detected. Please check your input.',
+                detail: process.env.NODE_ENV === 'development' ? error.message : undefined
+            } 
+        });
     }
     if (error.code === '23503') {
         return res.status(400).json({ error: { message: 'Invalid client ID or service plan ID. Please check your selection.' } });
@@ -37,7 +47,7 @@ function handleDatabaseError(error, operation, res) {
     // Return detailed error for other database errors
     return res.status(500).json({ 
         error: { 
-            message: `Failed to ${operation.toLowerCase()}`,
+            message: `Failed to ${operation}`,
             detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
             code: process.env.NODE_ENV === 'development' ? error.code : undefined
         } 
@@ -213,7 +223,7 @@ router.post('/client-services', async (req, res) => {
         if (client) {
             await client.query('ROLLBACK');
         }
-        return handleDatabaseError(error, 'Create client service', res);
+        return handleDatabaseError(error, 'create client service', res);
     } finally {
         if (client) {
             client.release();
@@ -283,7 +293,7 @@ router.put('/client-services/:id', async (req, res) => {
         if (client) {
             await client.query('ROLLBACK');
         }
-        return handleDatabaseError(error, 'Update client service', res);
+        return handleDatabaseError(error, 'update client service', res);
     } finally {
         if (client) {
             client.release();
@@ -325,7 +335,7 @@ router.delete('/client-services/:id', async (req, res) => {
         if (client) {
             await client.query('ROLLBACK');
         }
-        return handleDatabaseError(error, 'Delete client service', res);
+        return handleDatabaseError(error, 'delete client service', res);
     } finally {
         if (client) {
             client.release();
