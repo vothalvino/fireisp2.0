@@ -118,7 +118,11 @@ router.get('/client-services', async (req, res) => {
 
 // Create client service
 router.post('/client-services', async (req, res) => {
+    const client = await db.getClient();
+    
     try {
+        await client.query('BEGIN');
+        
         let {
             clientId, servicePlanId, username, password, ipAddress, macAddress,
             activationDate, expirationDate, notes, billingDayOfMonth, daysUntilDue, 
@@ -133,7 +137,7 @@ router.post('/client-services', async (req, res) => {
             password = generatePassword();
         }
         
-        const result = await db.query(
+        const result = await client.query(
             `INSERT INTO client_services (
                 client_id, service_plan_id, username, password, ip_address, mac_address,
                 activation_date, expiration_date, notes, billing_day_of_month, 
@@ -145,19 +149,28 @@ router.post('/client-services', async (req, res) => {
              daysUntilDue || null, recurringBillingEnabled !== false]
         );
         
-        // Add to RADIUS tables
-        await db.query(
-            "INSERT INTO radcheck (username, attribute, op, value) VALUES ($1, 'Cleartext-Password', ':=', $2)",
+        // Add to RADIUS tables - delete any existing entries first to handle cleanup
+        await client.query('DELETE FROM radcheck WHERE username = $1', [username]);
+        await client.query('DELETE FROM radreply WHERE username = $1', [username]);
+        
+        await client.query(
+            `INSERT INTO radcheck (username, attribute, op, value)
+             VALUES ($1, 'Cleartext-Password', ':=', $2)`,
             [username, password]
         );
         
+        await client.query('COMMIT');
+        
         res.status(201).json(result.rows[0]);
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Create client service error:', error);
         if (error.code === '23505') {
             return res.status(400).json({ error: { message: 'Username already exists' } });
         }
         res.status(500).json({ error: { message: 'Failed to create client service' } });
+    } finally {
+        client.release();
     }
 });
 
@@ -200,12 +213,14 @@ router.put('/client-services/:id', async (req, res) => {
         if (oldUsername !== username) {
             await db.query('DELETE FROM radcheck WHERE username = $1', [oldUsername]);
             await db.query('DELETE FROM radreply WHERE username = $1', [oldUsername]);
+        } else {
+            // Even if username didn't change, delete existing radcheck entry to ensure clean state
+            await db.query('DELETE FROM radcheck WHERE username = $1', [username]);
         }
         
         await db.query(
             `INSERT INTO radcheck (username, attribute, op, value)
-             VALUES ($1, 'Cleartext-Password', ':=', $2)
-             ON CONFLICT DO NOTHING`,
+             VALUES ($1, 'Cleartext-Password', ':=', $2)`,
             [username, password]
         );
         
