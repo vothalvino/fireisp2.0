@@ -582,7 +582,6 @@ function Services() {
                   </>
                 )}
               </div>
-              </div>
               
               <div style={{ gridColumn: '1 / -1' }}>
                 <label>Notes</label>
