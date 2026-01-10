@@ -449,6 +449,7 @@ function Services() {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Leave empty to auto-generate"
+                  autoComplete="new-password"
                 />
                 <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
                   Auto-generated if left empty (10 chars, no look-alike chars)

@@ -3,11 +3,14 @@
  * Excludes look-alike characters: I, l, 1, O, 0
  */
 
+const crypto = require('crypto');
+
 // Character set excluding look-alike characters (I, l, 1, O, 0)
 const SAFE_CHARS = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
 /**
  * Generates a random string of specified length using safe characters
+ * Uses cryptographically secure random number generation
  * @param {number} length - Length of the string to generate
  * @returns {string} Random string
  */
@@ -16,7 +19,7 @@ function generateRandomString(length = 10) {
     const charsLength = SAFE_CHARS.length;
     
     for (let i = 0; i < length; i++) {
-        const randomIndex = Math.floor(Math.random() * charsLength);
+        const randomIndex = crypto.randomInt(0, charsLength);
         result += SAFE_CHARS[randomIndex];
     }
     
