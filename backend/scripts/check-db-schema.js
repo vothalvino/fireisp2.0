@@ -25,9 +25,10 @@ async function checkSchema() {
             console.log('✅ invoices.amount_paid column exists');
             checks.push({ name: 'invoices.amount_paid', status: 'ok' });
         } else {
-            console.log('❌ invoices.amount_paid column is MISSING');
+            console.log('❌ amount_paid column is MISSING');
             console.log('   This column is required for payment tracking');
-            console.log('   Run migration 005_add_payment_system.sql to add it');
+            console.log('   Run migration 005_add_payment_system.sql to add it:');
+            console.log('   docker-compose exec -T postgres psql -U fireisp fireisp < database/migrations/005_add_payment_system.sql');
             checks.push({ name: 'invoices.amount_paid', status: 'missing' });
         }
         
@@ -44,7 +45,8 @@ async function checkSchema() {
         } else {
             console.log('❌ payment_allocations table is MISSING');
             console.log('   This table is required for payment allocation tracking');
-            console.log('   Run migration 005_add_payment_system.sql to add it');
+            console.log('   Run migration 005_add_payment_system.sql to add it:');
+            console.log('   docker-compose exec -T postgres psql -U fireisp fireisp < database/migrations/005_add_payment_system.sql');
             checks.push({ name: 'payment_allocations', status: 'missing' });
         }
         
@@ -62,7 +64,8 @@ async function checkSchema() {
         } else {
             console.log('❌ clients.credit_balance column is MISSING');
             console.log('   This column is required for client credit tracking');
-            console.log('   Run migration 005_add_payment_system.sql to add it');
+            console.log('   Run migration 005_add_payment_system.sql to add it:');
+            console.log('   docker-compose exec -T postgres psql -U fireisp fireisp < database/migrations/005_add_payment_system.sql');
             checks.push({ name: 'clients.credit_balance', status: 'missing' });
         }
         
@@ -90,8 +93,11 @@ async function checkSchema() {
         
         if (failed > 0) {
             console.log('\n⚠️  Some schema checks failed!');
-            console.log('   Please run the database migrations to fix these issues:');
-            console.log('   ./database/check-migrations.sh');
+            console.log('   Please run the database migrations to fix these issues.');
+            console.log('   From the project root directory, run:');
+            console.log('   sudo bash database/check-migrations.sh');
+            console.log('   Or apply migration 005 manually:');
+            console.log('   docker-compose exec -T postgres psql -U fireisp fireisp < database/migrations/005_add_payment_system.sql');
             process.exit(1);
         } else {
             console.log('\n✅ All schema checks passed!');
