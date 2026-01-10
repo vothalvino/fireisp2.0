@@ -5,14 +5,29 @@ ALTER TABLE clients ADD COLUMN IF NOT EXISTS credit_balance DECIMAL(10, 2) DEFAU
 
 -- Modify payments table to support payments without invoices
 -- invoice_id is now optional (nullable) to support direct credit payments
-ALTER TABLE payments ALTER COLUMN invoice_id DROP NOT NULL;
+-- Use DO block to handle case where NOT NULL constraint may not exist
+DO $$ 
+BEGIN
+    ALTER TABLE payments ALTER COLUMN invoice_id DROP NOT NULL;
+EXCEPTION
+    WHEN others THEN
+        -- Constraint doesn't exist or already dropped, continue
+        RAISE NOTICE 'invoice_id NOT NULL constraint does not exist or already dropped';
+END $$;
 
 -- Add client_id to payments table for direct credit payments
 ALTER TABLE payments ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES clients(id);
 
 -- Add constraint to ensure either invoice_id or client_id is set
-ALTER TABLE payments ADD CONSTRAINT check_payment_reference 
-    CHECK (invoice_id IS NOT NULL OR client_id IS NOT NULL);
+DO $$ 
+BEGIN
+    ALTER TABLE payments ADD CONSTRAINT check_payment_reference 
+        CHECK (invoice_id IS NOT NULL OR client_id IS NOT NULL);
+EXCEPTION
+    WHEN duplicate_object THEN
+        -- Constraint already exists, continue
+        RAISE NOTICE 'check_payment_reference constraint already exists';
+END $$;
 
 -- Create payment_allocations table to track which invoices were paid by each payment
 CREATE TABLE IF NOT EXISTS payment_allocations (
