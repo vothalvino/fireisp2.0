@@ -242,9 +242,13 @@ router.put('/client-services/:id', async (req, res) => {
 
 // Delete client service
 router.delete('/client-services/:id', async (req, res) => {
+    const client = await db.getClient();
+    
     try {
+        await client.query('BEGIN');
+        
         // Get username before deleting
-        const service = await db.query(
+        const service = await client.query(
             'SELECT username FROM client_services WHERE id = $1',
             [req.params.id]
         );
@@ -256,16 +260,21 @@ router.delete('/client-services/:id', async (req, res) => {
         const username = service.rows[0].username;
         
         // Delete from client_services
-        await db.query('DELETE FROM client_services WHERE id = $1', [req.params.id]);
+        await client.query('DELETE FROM client_services WHERE id = $1', [req.params.id]);
         
         // Delete from RADIUS tables
-        await db.query('DELETE FROM radcheck WHERE username = $1', [username]);
-        await db.query('DELETE FROM radreply WHERE username = $1', [username]);
+        await client.query('DELETE FROM radcheck WHERE username = $1', [username]);
+        await client.query('DELETE FROM radreply WHERE username = $1', [username]);
+        
+        await client.query('COMMIT');
         
         res.json({ message: 'Service deleted successfully' });
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Delete client service error:', error);
         res.status(500).json({ error: { message: 'Failed to delete client service' } });
+    } finally {
+        client.release();
     }
 });
 
