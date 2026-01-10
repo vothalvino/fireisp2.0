@@ -6,6 +6,79 @@ const { generateUsername, generatePassword } = require('../utils/credentialsGene
 
 router.use(authMiddleware);
 
+// Database constraint names
+const DB_CONSTRAINTS = {
+    USERNAME_UNIQUE: 'client_services_username_key'
+};
+
+// Helper function to validate required fields
+function validateRequiredFields(fields, res) {
+    for (const [fieldName, value] of Object.entries(fields)) {
+        if (!value) {
+            res.status(400).json({ 
+                error: { message: `${fieldName} is required` } 
+            });
+            return false;
+        }
+    }
+    return true;
+}
+
+// Helper function to handle database errors consistently
+function handleDatabaseError(error, operation, res) {
+    // Always log full error details server-side for debugging
+    console.error(`${operation} error:`, error);
+    console.error('Error details:', {
+        code: error.code,
+        constraint: error.constraint,
+        detail: error.detail,
+        message: error.message
+    });
+    
+    // Handle specific error cases with detailed messages
+    if (error.code === '23505') {
+        // Check if it's a username constraint violation
+        if (error.constraint === DB_CONSTRAINTS.USERNAME_UNIQUE || error.detail?.includes('username')) {
+            return res.status(400).json({ error: { message: 'Username already exists. Please use a different username.' } });
+        }
+        // Generic constraint violation message
+        return res.status(400).json({ 
+            error: { 
+                message: 'Duplicate value detected. Please check your input.',
+                detail: process.env.NODE_ENV === 'development' ? error.message : undefined
+            } 
+        });
+    }
+    if (error.code === '23503') {
+        return res.status(400).json({ error: { message: 'Invalid client ID or service plan ID. Please check your selection.' } });
+    }
+    if (error.code === '42703') {
+        return res.status(500).json({ 
+            error: { 
+                message: 'Database schema error: Missing required columns. Please run database migrations.',
+                detail: process.env.NODE_ENV === 'development' ? error.message : undefined
+            } 
+        });
+    }
+    if (error.code === '42P01') {
+        return res.status(500).json({ 
+            error: { 
+                message: 'Database schema error: Missing required tables. Please run database migrations.',
+                detail: process.env.NODE_ENV === 'development' ? error.message : undefined
+            } 
+        });
+    }
+    
+    // Return detailed error for other database errors
+    return res.status(500).json({ 
+        error: { 
+            message: `Failed to ${operation}`,
+            detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
+            code: process.env.NODE_ENV === 'development' ? error.code : undefined
+        } 
+    });
+}
+
 // Generate random credentials
 router.post('/generate-credentials', async (req, res) => {
     try {
@@ -118,16 +191,22 @@ router.get('/client-services', async (req, res) => {
 
 // Create client service
 router.post('/client-services', async (req, res) => {
-    const client = await db.getClient();
+    let {
+        clientId, servicePlanId, username, password, ipAddress, macAddress,
+        activationDate, expirationDate, notes, billingDayOfMonth, daysUntilDue, 
+        recurringBillingEnabled
+    } = req.body;
+    
+    // Validate required fields before obtaining database connection
+    if (!validateRequiredFields({ 'Client ID': clientId, 'Service Plan ID': servicePlanId }, res)) {
+        return;
+    }
+    
+    let client;
     
     try {
+        client = await db.getClient();
         await client.query('BEGIN');
-        
-        let {
-            clientId, servicePlanId, username, password, ipAddress, macAddress,
-            activationDate, expirationDate, notes, billingDayOfMonth, daysUntilDue, 
-            recurringBillingEnabled
-        } = req.body;
         
         // Generate random username and password if not provided
         if (!username || username.trim() === '') {
@@ -163,22 +242,23 @@ router.post('/client-services', async (req, res) => {
         
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Create client service error:', error);
-        if (error.code === '23505') {
-            return res.status(400).json({ error: { message: 'Username already exists' } });
+        if (client) {
+            await client.query('ROLLBACK');
         }
-        res.status(500).json({ error: { message: 'Failed to create client service' } });
+        return handleDatabaseError(error, 'create client service', res);
     } finally {
-        client.release();
+        if (client) {
+            client.release();
+        }
     }
 });
 
 // Update client service
 router.put('/client-services/:id', async (req, res) => {
-    const client = await db.getClient();
+    let client;
     
     try {
+        client = await db.getClient();
         await client.query('BEGIN');
         
         const {
@@ -232,19 +312,23 @@ router.put('/client-services/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Update client service error:', error);
-        res.status(500).json({ error: { message: 'Failed to update client service' } });
+        if (client) {
+            await client.query('ROLLBACK');
+        }
+        return handleDatabaseError(error, 'update client service', res);
     } finally {
-        client.release();
+        if (client) {
+            client.release();
+        }
     }
 });
 
 // Delete client service
 router.delete('/client-services/:id', async (req, res) => {
-    const client = await db.getClient();
+    let client;
     
     try {
+        client = await db.getClient();
         await client.query('BEGIN');
         
         // Get username before deleting
@@ -270,11 +354,14 @@ router.delete('/client-services/:id', async (req, res) => {
         
         res.json({ message: 'Service deleted successfully' });
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Delete client service error:', error);
-        res.status(500).json({ error: { message: 'Failed to delete client service' } });
+        if (client) {
+            await client.query('ROLLBACK');
+        }
+        return handleDatabaseError(error, 'delete client service', res);
     } finally {
-        client.release();
+        if (client) {
+            client.release();
+        }
     }
 });
 
