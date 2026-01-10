@@ -61,6 +61,7 @@ export const serviceService = {
   updateClientService: (id, data) => api.put(`/services/client-services/${id}`, data),
   deleteClientService: (id) => api.delete(`/services/client-services/${id}`),
   generateRecurringInvoices: () => api.post('/services/generate-recurring-invoices'),
+  generateCredentials: () => api.post('/services/generate-credentials'),
 };
 
 export const radiusService = {
