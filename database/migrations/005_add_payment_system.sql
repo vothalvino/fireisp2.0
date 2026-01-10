@@ -10,9 +10,12 @@ DO $$
 BEGIN
     ALTER TABLE payments ALTER COLUMN invoice_id DROP NOT NULL;
 EXCEPTION
-    WHEN others THEN
-        -- Constraint doesn't exist or already dropped, continue
-        RAISE NOTICE 'invoice_id NOT NULL constraint does not exist or already dropped';
+    WHEN invalid_column_definition THEN
+        -- Column definition doesn't support this operation, likely already nullable
+        RAISE NOTICE 'invoice_id column is already nullable or constraint does not exist';
+    WHEN undefined_column THEN
+        -- Column doesn't exist at all, skip
+        RAISE NOTICE 'invoice_id column does not exist, skipping';
 END $$;
 
 -- Add client_id to payments table for direct credit payments

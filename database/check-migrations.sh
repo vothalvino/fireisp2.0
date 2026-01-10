@@ -102,7 +102,7 @@ else
                     exit 1
                 else
                     # Record migration
-                    MIGRATION_DESC=$(echo "$MIGRATION_FILE" | sed 's/^[0-9]*_//;s/.sql$//')
+                    MIGRATION_DESC=$(echo "$MIGRATION_FILE" | sed 's/^[0-9]\+_//;s/\.sql$//')
                     docker-compose exec -T postgres psql -U fireisp fireisp -c "INSERT INTO schema_migrations (version, description) VALUES ('$MIGRATION_VERSION', '$MIGRATION_DESC') ON CONFLICT (version) DO NOTHING;" > /dev/null 2>&1
                     echo -e "  ${GREEN}✓${NC} Applied $MIGRATION_FILE"
                 fi
