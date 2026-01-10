@@ -118,9 +118,10 @@ router.get('/client-services', async (req, res) => {
 
 // Create client service
 router.post('/client-services', async (req, res) => {
-    const client = await db.getClient();
+    let client;
     
     try {
+        client = await db.getClient();
         await client.query('BEGIN');
         
         let {
@@ -128,6 +129,14 @@ router.post('/client-services', async (req, res) => {
             activationDate, expirationDate, notes, billingDayOfMonth, daysUntilDue, 
             recurringBillingEnabled
         } = req.body;
+        
+        // Validate required fields
+        if (!clientId) {
+            return res.status(400).json({ error: { message: 'Client ID is required' } });
+        }
+        if (!servicePlanId) {
+            return res.status(400).json({ error: { message: 'Service Plan ID is required' } });
+        }
         
         // Generate random username and password if not provided
         if (!username || username.trim() === '') {
@@ -163,22 +172,56 @@ router.post('/client-services', async (req, res) => {
         
         res.status(201).json(result.rows[0]);
     } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Create client service error:', error);
-        if (error.code === '23505') {
-            return res.status(400).json({ error: { message: 'Username already exists' } });
+        if (client) {
+            await client.query('ROLLBACK');
         }
-        res.status(500).json({ error: { message: 'Failed to create client service' } });
+        console.error('Create client service error:', error);
+        
+        // Handle specific error cases with detailed messages
+        if (error.code === '23505') {
+            return res.status(400).json({ error: { message: 'Username already exists. Please use a different username.' } });
+        }
+        if (error.code === '23503') {
+            return res.status(400).json({ error: { message: 'Invalid client ID or service plan ID. Please check your selection.' } });
+        }
+        if (error.code === '42703') {
+            return res.status(500).json({ 
+                error: { 
+                    message: 'Database schema error: Missing required columns. Please run database migrations.',
+                    detail: error.message 
+                } 
+            });
+        }
+        if (error.code === '42P01') {
+            return res.status(500).json({ 
+                error: { 
+                    message: 'Database schema error: Missing required tables. Please run database migrations.',
+                    detail: error.message 
+                } 
+            });
+        }
+        
+        // Return detailed error for other database errors
+        res.status(500).json({ 
+            error: { 
+                message: 'Failed to create client service',
+                detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
+                code: error.code
+            } 
+        });
     } finally {
-        client.release();
+        if (client) {
+            client.release();
+        }
     }
 });
 
 // Update client service
 router.put('/client-services/:id', async (req, res) => {
-    const client = await db.getClient();
+    let client;
     
     try {
+        client = await db.getClient();
         await client.query('BEGIN');
         
         const {
@@ -232,19 +275,55 @@ router.put('/client-services/:id', async (req, res) => {
         
         res.json(result.rows[0]);
     } catch (error) {
-        await client.query('ROLLBACK');
+        if (client) {
+            await client.query('ROLLBACK');
+        }
         console.error('Update client service error:', error);
-        res.status(500).json({ error: { message: 'Failed to update client service' } });
+        
+        // Handle specific error cases with detailed messages
+        if (error.code === '23505') {
+            return res.status(400).json({ error: { message: 'Username already exists. Please use a different username.' } });
+        }
+        if (error.code === '23503') {
+            return res.status(400).json({ error: { message: 'Invalid service plan ID. Please check your selection.' } });
+        }
+        if (error.code === '42703') {
+            return res.status(500).json({ 
+                error: { 
+                    message: 'Database schema error: Missing required columns. Please run database migrations.',
+                    detail: error.message 
+                } 
+            });
+        }
+        if (error.code === '42P01') {
+            return res.status(500).json({ 
+                error: { 
+                    message: 'Database schema error: Missing required tables. Please run database migrations.',
+                    detail: error.message 
+                } 
+            });
+        }
+        
+        res.status(500).json({ 
+            error: { 
+                message: 'Failed to update client service',
+                detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
+                code: error.code
+            } 
+        });
     } finally {
-        client.release();
+        if (client) {
+            client.release();
+        }
     }
 });
 
 // Delete client service
 router.delete('/client-services/:id', async (req, res) => {
-    const client = await db.getClient();
+    let client;
     
     try {
+        client = await db.getClient();
         await client.query('BEGIN');
         
         // Get username before deleting
@@ -270,11 +349,21 @@ router.delete('/client-services/:id', async (req, res) => {
         
         res.json({ message: 'Service deleted successfully' });
     } catch (error) {
-        await client.query('ROLLBACK');
+        if (client) {
+            await client.query('ROLLBACK');
+        }
         console.error('Delete client service error:', error);
-        res.status(500).json({ error: { message: 'Failed to delete client service' } });
+        res.status(500).json({ 
+            error: { 
+                message: 'Failed to delete client service',
+                detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
+                code: error.code
+            } 
+        });
     } finally {
-        client.release();
+        if (client) {
+            client.release();
+        }
     }
 });
 
