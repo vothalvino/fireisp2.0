@@ -80,6 +80,9 @@ function Services() {
         daysUntilDue: checked ? '' : prev.daysUntilDue
       }));
     } else {
+      if (name === 'password') {
+        setShowPassword(false);
+      }
       setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
