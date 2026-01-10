@@ -11,17 +11,14 @@ router.use(authMiddleware);
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
-    destination: async (req, file, cb) => {
+    destination: (req, file, cb) => {
         const clientId = req.params.clientId;
         const uploadPath = path.join(__dirname, '../../../uploads/clients', clientId);
         
         // Create directory if it doesn't exist
-        try {
-            await fs.mkdir(uploadPath, { recursive: true });
-            cb(null, uploadPath);
-        } catch (error) {
-            cb(error);
-        }
+        fs.mkdir(uploadPath, { recursive: true })
+            .then(() => cb(null, uploadPath))
+            .catch((error) => cb(error));
     },
     filename: (req, file, cb) => {
         // Generate unique filename with timestamp and random string
