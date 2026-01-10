@@ -96,15 +96,17 @@ else
             if ! docker-compose exec -T postgres psql -U fireisp fireisp -t -c "SELECT 1 FROM schema_migrations WHERE version = '$MIGRATION_VERSION';" | grep -q "1"; then
                 echo -e "  Applying ${BLUE}$MIGRATION_FILE${NC}..."
                 
-                if docker-compose exec -T postgres psql -U fireisp fireisp < "$migration" 2>&1 | tee /tmp/migration_output.log | grep -qi "error"; then
-                    echo -e "  ${RED}✗${NC} Failed to apply $MIGRATION_FILE"
-                    echo "  Check /tmp/migration_output.log for details"
-                    exit 1
-                else
+                # Apply migration and check exit code
+                if docker-compose exec -T postgres psql -U fireisp fireisp < "$migration" > /tmp/migration_output.log 2>&1; then
                     # Record migration
-                    MIGRATION_DESC=$(echo "$MIGRATION_FILE" | sed 's/^[0-9]\+_//;s/\.sql$//')
+                    MIGRATION_DESC=$(echo "$MIGRATION_FILE" | sed 's/^[0-9][0-9]*_//;s/\.sql$//')
                     docker-compose exec -T postgres psql -U fireisp fireisp -c "INSERT INTO schema_migrations (version, description) VALUES ('$MIGRATION_VERSION', '$MIGRATION_DESC') ON CONFLICT (version) DO NOTHING;" > /dev/null 2>&1
                     echo -e "  ${GREEN}✓${NC} Applied $MIGRATION_FILE"
+                else
+                    echo -e "  ${RED}✗${NC} Failed to apply $MIGRATION_FILE"
+                    echo "  Check /tmp/migration_output.log for details"
+                    cat /tmp/migration_output.log
+                    exit 1
                 fi
             fi
         done
