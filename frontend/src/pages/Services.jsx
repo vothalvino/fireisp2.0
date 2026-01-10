@@ -136,6 +136,17 @@ function Services() {
     }
   };
 
+  const handleGenerateCredentials = async () => {
+    try {
+      const response = await serviceService.generateCredentials();
+      const { username, password } = response.data;
+      setFormData(prev => ({ ...prev, username, password }));
+    } catch (error) {
+      console.error('Failed to generate credentials:', error);
+      alert('Failed to generate credentials');
+    }
+  };
+
   const handleEdit = (service) => {
     setSelectedService(service);
     const hasCustomBilling = service.billing_day_of_month !== null || service.days_until_due !== null;
@@ -406,25 +417,42 @@ function Services() {
               </div>
               
               <div>
-                <label>Username *</label>
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleInputChange}
-                  required
-                />
+                <label>Username</label>
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <input
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleInputChange}
+                    placeholder="Leave empty to auto-generate"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleGenerateCredentials}
+                    title="Generate random credentials"
+                    style={{ whiteSpace: 'nowrap', padding: '0 15px' }}
+                  >
+                    Generate
+                  </button>
+                </div>
+                <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                  Auto-generated if left empty (10 chars, no look-alike chars)
+                </p>
               </div>
               
               <div>
-                <label>Password *</label>
+                <label>Password</label>
                 <input
-                  type="password"
+                  type="text"
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  required={!selectedService}
+                  placeholder="Leave empty to auto-generate"
                 />
+                <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
+                  Auto-generated if left empty (10 chars, no look-alike chars)
+                </p>
               </div>
               
               <div>

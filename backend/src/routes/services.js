@@ -2,8 +2,22 @@ const express = require('express');
 const router = express.Router();
 const db = require('../utils/database');
 const { authMiddleware } = require('../middleware/auth');
+const { generateUsername, generatePassword } = require('../utils/credentialsGenerator');
 
 router.use(authMiddleware);
+
+// Generate random credentials
+router.post('/generate-credentials', async (req, res) => {
+    try {
+        res.json({
+            username: generateUsername(),
+            password: generatePassword()
+        });
+    } catch (error) {
+        console.error('Generate credentials error:', error);
+        res.status(500).json({ error: { message: 'Failed to generate credentials' } });
+    }
+});
 
 // Get service types
 router.get('/types', async (req, res) => {
@@ -105,11 +119,19 @@ router.get('/client-services', async (req, res) => {
 // Create client service
 router.post('/client-services', async (req, res) => {
     try {
-        const {
+        let {
             clientId, servicePlanId, username, password, ipAddress, macAddress,
             activationDate, expirationDate, notes, billingDayOfMonth, daysUntilDue, 
             recurringBillingEnabled
         } = req.body;
+        
+        // Generate random username and password if not provided
+        if (!username || username.trim() === '') {
+            username = generateUsername();
+        }
+        if (!password || password.trim() === '') {
+            password = generatePassword();
+        }
         
         const result = await db.query(
             `INSERT INTO client_services (
