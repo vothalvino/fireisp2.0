@@ -118,25 +118,25 @@ router.get('/client-services', async (req, res) => {
 
 // Create client service
 router.post('/client-services', async (req, res) => {
+    let {
+        clientId, servicePlanId, username, password, ipAddress, macAddress,
+        activationDate, expirationDate, notes, billingDayOfMonth, daysUntilDue, 
+        recurringBillingEnabled
+    } = req.body;
+    
+    // Validate required fields before obtaining database connection
+    if (!clientId) {
+        return res.status(400).json({ error: { message: 'Client ID is required' } });
+    }
+    if (!servicePlanId) {
+        return res.status(400).json({ error: { message: 'Service Plan ID is required' } });
+    }
+    
     let client;
     
     try {
         client = await db.getClient();
         await client.query('BEGIN');
-        
-        let {
-            clientId, servicePlanId, username, password, ipAddress, macAddress,
-            activationDate, expirationDate, notes, billingDayOfMonth, daysUntilDue, 
-            recurringBillingEnabled
-        } = req.body;
-        
-        // Validate required fields
-        if (!clientId) {
-            return res.status(400).json({ error: { message: 'Client ID is required' } });
-        }
-        if (!servicePlanId) {
-            return res.status(400).json({ error: { message: 'Service Plan ID is required' } });
-        }
         
         // Generate random username and password if not provided
         if (!username || username.trim() === '') {
@@ -188,7 +188,7 @@ router.post('/client-services', async (req, res) => {
             return res.status(500).json({ 
                 error: { 
                     message: 'Database schema error: Missing required columns. Please run database migrations.',
-                    detail: error.message 
+                    detail: process.env.NODE_ENV === 'development' ? error.message : undefined
                 } 
             });
         }
@@ -196,7 +196,7 @@ router.post('/client-services', async (req, res) => {
             return res.status(500).json({ 
                 error: { 
                     message: 'Database schema error: Missing required tables. Please run database migrations.',
-                    detail: error.message 
+                    detail: process.env.NODE_ENV === 'development' ? error.message : undefined
                 } 
             });
         }
@@ -206,7 +206,7 @@ router.post('/client-services', async (req, res) => {
             error: { 
                 message: 'Failed to create client service',
                 detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
-                code: error.code
+                code: process.env.NODE_ENV === 'development' ? error.code : undefined
             } 
         });
     } finally {
@@ -291,7 +291,7 @@ router.put('/client-services/:id', async (req, res) => {
             return res.status(500).json({ 
                 error: { 
                     message: 'Database schema error: Missing required columns. Please run database migrations.',
-                    detail: error.message 
+                    detail: process.env.NODE_ENV === 'development' ? error.message : undefined
                 } 
             });
         }
@@ -299,7 +299,7 @@ router.put('/client-services/:id', async (req, res) => {
             return res.status(500).json({ 
                 error: { 
                     message: 'Database schema error: Missing required tables. Please run database migrations.',
-                    detail: error.message 
+                    detail: process.env.NODE_ENV === 'development' ? error.message : undefined
                 } 
             });
         }
@@ -308,7 +308,7 @@ router.put('/client-services/:id', async (req, res) => {
             error: { 
                 message: 'Failed to update client service',
                 detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
-                code: error.code
+                code: process.env.NODE_ENV === 'development' ? error.code : undefined
             } 
         });
     } finally {
@@ -357,7 +357,7 @@ router.delete('/client-services/:id', async (req, res) => {
             error: { 
                 message: 'Failed to delete client service',
                 detail: process.env.NODE_ENV === 'development' ? error.message : undefined,
-                code: error.code
+                code: process.env.NODE_ENV === 'development' ? error.code : undefined
             } 
         });
     } finally {
