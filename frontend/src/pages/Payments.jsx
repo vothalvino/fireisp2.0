@@ -44,6 +44,21 @@ function Payments() {
     }
   }, [selectedInvoices]);
 
+  const resetForm = () => {
+    setShowForm(false);
+    setSelectedClient(null);
+    setUnpaidInvoices([]);
+    setSelectedInvoices({});
+    setFormData({
+      clientId: '',
+      amount: '',
+      paymentDate: new Date().toISOString().split('T')[0],
+      paymentMethod: 'cash',
+      transactionId: '',
+      notes: ''
+    });
+  };
+
   const loadClients = async () => {
     try {
       const res = await clientService.getAll({ limit: 1000 });
@@ -189,18 +204,7 @@ function Payments() {
       alert(message);
       
       // Reset form
-      setShowForm(false);
-      setSelectedClient(null);
-      setUnpaidInvoices([]);
-      setSelectedInvoices({});
-      setFormData({
-        clientId: '',
-        amount: '',
-        paymentDate: new Date().toISOString().split('T')[0],
-        paymentMethod: 'cash',
-        transactionId: '',
-        notes: ''
-      });
+      resetForm();
     } catch (error) {
       console.error('Failed to register payment:', error);
       alert('Failed to register payment: ' + (error.response?.data?.error?.message || error.message));
@@ -218,20 +222,7 @@ function Payments() {
       <div>
         <div className="page-header">
           <h1><DollarSign size={32} /> Register Payment</h1>
-          <button className="btn" onClick={() => {
-            setShowForm(false);
-            setSelectedClient(null);
-            setUnpaidInvoices([]);
-            setSelectedInvoices({});
-            setFormData({
-              clientId: '',
-              amount: '',
-              paymentDate: new Date().toISOString().split('T')[0],
-              paymentMethod: 'cash',
-              transactionId: '',
-              notes: ''
-            });
-          }}>Cancel</button>
+          <button className="btn" onClick={resetForm}>Cancel</button>
         </div>
 
         <div className="card">
@@ -459,20 +450,7 @@ function Payments() {
             </div>
 
             <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn" onClick={() => {
-                setShowForm(false);
-                setSelectedClient(null);
-                setUnpaidInvoices([]);
-                setSelectedInvoices({});
-                setFormData({
-                  clientId: '',
-                  amount: '',
-                  paymentDate: new Date().toISOString().split('T')[0],
-                  paymentMethod: 'cash',
-                  transactionId: '',
-                  notes: ''
-                });
-              }}>
+              <button type="button" className="btn" onClick={resetForm}>
                 Cancel
               </button>
               <button type="submit" className="btn btn-primary">
