@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { serviceService, clientService } from '../services/api';
-import { Package, Plus, Edit, Trash2, FileText } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, FileText, Eye, EyeOff, Copy } from 'lucide-react';
 
 function Services() {
   const [services, setServices] = useState([]);
@@ -12,6 +12,7 @@ function Services() {
   const [showForm, setShowForm] = useState(false);
   const [showPlanForm, setShowPlanForm] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     clientId: '',
     servicePlanId: '',
@@ -147,8 +148,16 @@ function Services() {
     }
   };
 
+  const handleCopyPassword = () => {
+    if (formData.password) {
+      navigator.clipboard.writeText(formData.password);
+      alert('Password copied to clipboard!');
+    }
+  };
+
   const handleEdit = (service) => {
     setSelectedService(service);
+    setShowPassword(false);
     const hasCustomBilling = service.billing_day_of_month !== null || service.days_until_due !== null;
     setFormData({
       clientId: service.client_id,
@@ -209,6 +218,7 @@ function Services() {
   };
 
   const resetForm = () => {
+    setShowPassword(false);
     setFormData({
       clientId: '',
       servicePlanId: '',
@@ -443,14 +453,38 @@ function Services() {
               
               <div>
                 <label>Password</label>
-                <input
-                  type="text"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  placeholder="Leave empty to auto-generate"
-                  autoComplete="new-password"
-                />
+                <div style={{ display: 'flex', gap: '5px' }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Leave empty to auto-generate"
+                    autoComplete="new-password"
+                  />
+                  {formData.password && (
+                    <>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setShowPassword(!showPassword)}
+                        title={showPassword ? "Hide password" : "Show password"}
+                        style={{ whiteSpace: 'nowrap', padding: '0 15px' }}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={handleCopyPassword}
+                        title="Copy password to clipboard"
+                        style={{ whiteSpace: 'nowrap', padding: '0 15px' }}
+                      >
+                        <Copy size={16} />
+                      </button>
+                    </>
+                  )}
+                </div>
                 <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
                   Auto-generated if left empty (10 chars, no look-alike chars)
                 </p>
