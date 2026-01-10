@@ -73,6 +73,9 @@ function ClientDashboard() {
       setSessions(clientSessions);
     } catch (error) {
       console.error('Failed to load client data:', error);
+      console.error('Error response:', error.response);
+      const errorMsg = error.response?.data?.error?.message || error.message || 'Unknown error';
+      alert(`Failed to load client data: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

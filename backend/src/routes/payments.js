@@ -8,22 +8,52 @@ router.use(authMiddleware);
 // Get client's unpaid invoices
 router.get('/client/:clientId/unpaid-invoices', async (req, res) => {
     try {
-        const result = await db.query(
-            `SELECT i.*, 
-                    (i.total - COALESCE(i.amount_paid, 0)) as amount_due
-             FROM invoices i
-             WHERE i.client_id = $1 
-             AND i.status != 'paid' 
-             AND i.status != 'cancelled'
-             AND (i.total - COALESCE(i.amount_paid, 0)) > 0
-             ORDER BY i.due_date ASC`,
-            [req.params.clientId]
-        );
+        // First, try the query with amount_paid column
+        let result;
+        try {
+            result = await db.query(
+                `SELECT i.*, 
+                        (i.total - COALESCE(i.amount_paid, 0)) as amount_due
+                 FROM invoices i
+                 WHERE i.client_id = $1 
+                 AND i.status != 'paid' 
+                 AND i.status != 'cancelled'
+                 AND (i.total - COALESCE(i.amount_paid, 0)) > 0
+                 ORDER BY i.due_date ASC`,
+                [req.params.clientId]
+            );
+        } catch (columnError) {
+            // If amount_paid column doesn't exist, fall back to a simpler query
+            // Check if this is a column-related error (PostgreSQL error code 42703)
+            if (columnError.code === '42703' || columnError.message.includes('column') || columnError.message.includes('amount_paid')) {
+                console.warn('amount_paid column may not exist, using fallback query:', columnError.message);
+                result = await db.query(
+                    `SELECT i.*, 
+                            i.total as amount_due
+                     FROM invoices i
+                     WHERE i.client_id = $1 
+                     AND i.status != 'paid' 
+                     AND i.status != 'cancelled'
+                     AND i.total > 0
+                     ORDER BY i.due_date ASC`,
+                    [req.params.clientId]
+                );
+            } else {
+                // Re-throw if it's not a column-related error
+                throw columnError;
+            }
+        }
         
         res.json(result.rows);
     } catch (error) {
         console.error('Get unpaid invoices error:', error);
-        res.status(500).json({ error: { message: 'Failed to get unpaid invoices' } });
+        console.error('Error details:', error.message, error.stack);
+        res.status(500).json({ 
+            error: { 
+                message: 'Failed to get unpaid invoices',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            } 
+        });
     }
 });
 

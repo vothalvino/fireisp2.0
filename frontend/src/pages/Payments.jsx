@@ -96,8 +96,14 @@ function Payments() {
       setSelectedInvoices(selected);
     } catch (error) {
       console.error('Failed to load client data:', error);
+      console.error('Error response:', error.response);
       const errorMsg = error.response?.data?.error?.message || error.message || 'Unknown error';
-      alert(`Failed to load client data: ${errorMsg}`);
+      const errorDetails = error.response?.data?.error?.details;
+      let displayMsg = `Failed to load client data: ${errorMsg}`;
+      if (errorDetails) {
+        displayMsg += `\n\nDetails: ${errorDetails}`;
+      }
+      alert(displayMsg);
       // Reset selection on error
       setSelectedClient(null);
       setFormData(prev => ({ ...prev, clientId: '' }));

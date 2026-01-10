@@ -89,6 +89,25 @@ After applying the migrations, verify the fix:
 
 ## Common Errors and Solutions
 
+### Error: "Failed to load client data: Failed to get unpaid invoices"
+
+**Cause:** The `amount_paid` column is missing from the invoices table, or Migration 005 was not applied correctly
+
+**Solution:** 
+1. Apply migration 005:
+   ```bash
+   docker-compose exec -T postgres psql -U fireisp fireisp < database/migrations/005_add_payment_system.sql
+   ```
+2. Verify the column exists:
+   ```bash
+   docker-compose exec postgres psql -U fireisp fireisp -c "\d invoices"
+   ```
+   Look for the `amount_paid` column in the output
+3. Restart the backend to reload the schema:
+   ```bash
+   docker-compose restart backend
+   ```
+
 ### Error: "column clients.credit_balance does not exist"
 
 **Cause:** Migration 005 not applied
