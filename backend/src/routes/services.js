@@ -176,7 +176,11 @@ router.post('/client-services', async (req, res) => {
 
 // Update client service
 router.put('/client-services/:id', async (req, res) => {
+    const client = await db.getClient();
+    
     try {
+        await client.query('BEGIN');
+        
         const {
             servicePlanId, username, password, ipAddress, macAddress,
             status, activationDate, expirationDate, notes, billingDayOfMonth,
@@ -184,7 +188,7 @@ router.put('/client-services/:id', async (req, res) => {
         } = req.body;
         
         // Get old username
-        const oldService = await db.query(
+        const oldService = await client.query(
             'SELECT username FROM client_services WHERE id = $1',
             [req.params.id]
         );
@@ -196,7 +200,7 @@ router.put('/client-services/:id', async (req, res) => {
         const oldUsername = oldService.rows[0].username;
         
         // Update service
-        const result = await db.query(
+        const result = await client.query(
             `UPDATE client_services SET
                 service_plan_id = $1, username = $2, password = $3, ip_address = $4,
                 mac_address = $5, status = $6, activation_date = $7, expiration_date = $8, 
@@ -209,25 +213,30 @@ router.put('/client-services/:id', async (req, res) => {
              daysUntilDue || null, recurringBillingEnabled !== false, req.params.id]
         );
         
-        // Update RADIUS tables if username or password changed
+        // Clean up RADIUS tables - delete old entries for both old and new usernames
+        await client.query('DELETE FROM radcheck WHERE username = $1', [oldUsername]);
+        await client.query('DELETE FROM radreply WHERE username = $1', [oldUsername]);
         if (oldUsername !== username) {
-            await db.query('DELETE FROM radcheck WHERE username = $1', [oldUsername]);
-            await db.query('DELETE FROM radreply WHERE username = $1', [oldUsername]);
-        } else {
-            // Even if username didn't change, delete existing radcheck entry to ensure clean state
-            await db.query('DELETE FROM radcheck WHERE username = $1', [username]);
+            await client.query('DELETE FROM radcheck WHERE username = $1', [username]);
+            await client.query('DELETE FROM radreply WHERE username = $1', [username]);
         }
         
-        await db.query(
+        // Insert new RADIUS entry
+        await client.query(
             `INSERT INTO radcheck (username, attribute, op, value)
              VALUES ($1, 'Cleartext-Password', ':=', $2)`,
             [username, password]
         );
         
+        await client.query('COMMIT');
+        
         res.json(result.rows[0]);
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error('Update client service error:', error);
         res.status(500).json({ error: { message: 'Failed to update client service' } });
+    } finally {
+        client.release();
     }
 });
 
