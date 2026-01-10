@@ -6,14 +6,39 @@ const { generateUsername, generatePassword } = require('../utils/credentialsGene
 
 router.use(authMiddleware);
 
+// Database constraint names
+const DB_CONSTRAINTS = {
+    USERNAME_UNIQUE: 'client_services_username_key'
+};
+
+// Helper function to validate required fields
+function validateRequiredFields(fields, res) {
+    for (const [fieldName, value] of Object.entries(fields)) {
+        if (!value) {
+            res.status(400).json({ 
+                error: { message: `${fieldName} is required` } 
+            });
+            return false;
+        }
+    }
+    return true;
+}
+
 // Helper function to handle database errors consistently
 function handleDatabaseError(error, operation, res) {
+    // Always log full error details server-side for debugging
     console.error(`${operation} error:`, error);
+    console.error('Error details:', {
+        code: error.code,
+        constraint: error.constraint,
+        detail: error.detail,
+        message: error.message
+    });
     
     // Handle specific error cases with detailed messages
     if (error.code === '23505') {
         // Check if it's a username constraint violation
-        if (error.constraint === 'client_services_username_key' || error.detail?.includes('username')) {
+        if (error.constraint === DB_CONSTRAINTS.USERNAME_UNIQUE || error.detail?.includes('username')) {
             return res.status(400).json({ error: { message: 'Username already exists. Please use a different username.' } });
         }
         // Generic constraint violation message
@@ -173,11 +198,8 @@ router.post('/client-services', async (req, res) => {
     } = req.body;
     
     // Validate required fields before obtaining database connection
-    if (!clientId) {
-        return res.status(400).json({ error: { message: 'Client ID is required' } });
-    }
-    if (!servicePlanId) {
-        return res.status(400).json({ error: { message: 'Service Plan ID is required' } });
+    if (!validateRequiredFields({ 'Client ID': clientId, 'Service Plan ID': servicePlanId }, res)) {
+        return;
     }
     
     let client;
