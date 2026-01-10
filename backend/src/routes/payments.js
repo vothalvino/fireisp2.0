@@ -26,7 +26,7 @@ router.get('/client/:clientId/unpaid-invoices', async (req, res) => {
             // If amount_paid column doesn't exist, fall back to a simpler query
             // Check if this is a column-related error (PostgreSQL error code 42703)
             if (columnError.code === '42703' || columnError.message.includes('column') || columnError.message.includes('amount_paid')) {
-                console.log('amount_paid column may not exist, using fallback query:', columnError.message);
+                console.warn('amount_paid column may not exist, using fallback query:', columnError.message);
                 result = await db.query(
                     `SELECT i.*, 
                             i.total as amount_due
