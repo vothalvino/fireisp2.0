@@ -248,9 +248,11 @@ router.post('/generate-recurring-invoices', async (req, res) => {
         const defaultDaysToPay = parseInt(settingsMap.default_days_to_pay) || 15;
         
         // Get all active services that need invoicing
-        // A service needs invoicing if:
-        // 1. It's active and has recurring billing enabled
-        // 2. Either it's the billing day OR it has never been invoiced
+        // This query gathers potential candidates using a broad filter:
+        // 1. It's their billing day (custom or default)
+        // 2. They've never been invoiced (new services)
+        // 3. Their last invoice was in a previous month (catch-up cases)
+        // The actual duplicate check happens in the loop below
         const servicesToInvoice = await client.query(
             `SELECT cs.*, sp.price, sp.billing_cycle, sp.name as plan_name,
                     c.id as client_id, c.company_name, c.email,
@@ -291,7 +293,10 @@ router.post('/generate-recurring-invoices', async (req, res) => {
             
             // Generate invoice number
             // Generate unique invoice number using timestamp and service ID
-            // This prevents race conditions and ensures uniqueness
+            // Format: INV-{year}-{timestamp}-{serviceId}
+            // The timestamp (last 6 digits of milliseconds) + service ID provides uniqueness
+            // This approach prevents race conditions in concurrent invoice generation
+            // and ensures each invoice has a unique, sortable number
             const timestamp = Date.now().toString().slice(-6);
             const serviceIdShort = service.id.toString().slice(0, 8);
             const invoiceNumber = `INV-${today.getFullYear()}-${timestamp}-${serviceIdShort}`;

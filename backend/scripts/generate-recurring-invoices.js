@@ -98,7 +98,9 @@ async function generateRecurringInvoices() {
             const dueDateStr = dueDate.toISOString().split('T')[0];
             
             // Generate unique invoice number using timestamp and service ID
-            // This prevents race conditions and ensures uniqueness
+            // Format: INV-{year}-{timestamp}-{serviceId}
+            // The timestamp (last 6 digits of milliseconds) + service ID provides uniqueness
+            // This approach prevents race conditions in concurrent invoice generation
             const timestamp = Date.now().toString().slice(-6);
             const serviceIdShort = service.id.toString().slice(0, 8);
             const invoiceNumber = `INV-${today.getFullYear()}-${timestamp}-${serviceIdShort}`;

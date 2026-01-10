@@ -2,6 +2,7 @@
 -- This migration adds fields needed for automatic recurring invoice generation
 
 -- Add default billing configuration to system settings
+-- ON CONFLICT DO NOTHING preserves existing custom values if migration runs multiple times
 INSERT INTO system_settings (key, value, description) VALUES
     ('default_billing_day', '1', 'Default day of month to generate invoices (1-28)'),
     ('default_days_to_pay', '15', 'Default number of days until invoice is due')
