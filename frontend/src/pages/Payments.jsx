@@ -44,6 +44,21 @@ function Payments() {
     }
   }, [selectedInvoices]);
 
+  const resetForm = () => {
+    setShowForm(false);
+    setSelectedClient(null);
+    setUnpaidInvoices([]);
+    setSelectedInvoices({});
+    setFormData({
+      clientId: '',
+      amount: '',
+      paymentDate: new Date().toISOString().split('T')[0],
+      paymentMethod: 'cash',
+      transactionId: '',
+      notes: ''
+    });
+  };
+
   const loadClients = async () => {
     try {
       const res = await clientService.getAll({ limit: 1000 });
@@ -63,28 +78,44 @@ function Payments() {
         paymentService.getClientCredit(clientId)
       ]);
       
-      setUnpaidInvoices(invoicesRes.data);
-      setClientCredit(creditRes.data.creditBalance);
+      // Validate response data
+      const invoices = Array.isArray(invoicesRes.data) ? invoicesRes.data : [];
+      const creditBalance = creditRes.data?.creditBalance ?? 0;
+      
+      setUnpaidInvoices(invoices);
+      setClientCredit(creditBalance);
       
       // Initialize selected invoices with all invoices selected by default
       const selected = {};
-      invoicesRes.data.forEach(invoice => {
+      invoices.forEach(invoice => {
         selected[invoice.id] = {
           selected: true,
-          amount: parseFloat(invoice.amount_due).toFixed(2)
+          amount: parseFloat(invoice.amount_due || 0).toFixed(2)
         };
       });
       setSelectedInvoices(selected);
     } catch (error) {
       console.error('Failed to load client data:', error);
-      alert('Failed to load client data');
+      const errorMsg = error.response?.data?.error?.message || error.message || 'Unknown error';
+      alert(`Failed to load client data: ${errorMsg}`);
+      // Reset selection on error
+      setSelectedClient(null);
+      setFormData(prev => ({ ...prev, clientId: '' }));
     }
   };
 
   const handleClientSelect = (e) => {
     const clientId = e.target.value;
     setFormData(prev => ({ ...prev, clientId }));
-    setSelectedClient(clientId);
+    // Only set selectedClient if clientId is truthy, otherwise clear it
+    if (clientId) {
+      setSelectedClient(clientId);
+    } else {
+      setSelectedClient(null);
+      setUnpaidInvoices([]);
+      setSelectedInvoices({});
+      setClientCredit(0);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -173,18 +204,7 @@ function Payments() {
       alert(message);
       
       // Reset form
-      setShowForm(false);
-      setSelectedClient(null);
-      setUnpaidInvoices([]);
-      setSelectedInvoices({});
-      setFormData({
-        clientId: '',
-        amount: '',
-        paymentDate: new Date().toISOString().split('T')[0],
-        paymentMethod: 'cash',
-        transactionId: '',
-        notes: ''
-      });
+      resetForm();
     } catch (error) {
       console.error('Failed to register payment:', error);
       alert('Failed to register payment: ' + (error.response?.data?.error?.message || error.message));
@@ -202,12 +222,7 @@ function Payments() {
       <div>
         <div className="page-header">
           <h1><DollarSign size={32} /> Register Payment</h1>
-          <button className="btn" onClick={() => {
-            setShowForm(false);
-            setSelectedClient(null);
-            setUnpaidInvoices([]);
-            setSelectedInvoices({});
-          }}>Cancel</button>
+          <button className="btn" onClick={resetForm}>Cancel</button>
         </div>
 
         <div className="card">
@@ -435,12 +450,7 @@ function Payments() {
             </div>
 
             <div style={{ marginTop: '20px', display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button type="button" className="btn" onClick={() => {
-                setShowForm(false);
-                setSelectedClient(null);
-                setUnpaidInvoices([]);
-                setSelectedInvoices({});
-              }}>
+              <button type="button" className="btn" onClick={resetForm}>
                 Cancel
               </button>
               <button type="submit" className="btn btn-primary">
