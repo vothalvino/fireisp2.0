@@ -153,6 +153,10 @@ function Services() {
 
   const handleCopyPassword = async () => {
     if (formData.password) {
+      if (!navigator.clipboard) {
+        alert('Clipboard not supported in this browser. Please copy manually.');
+        return;
+      }
       try {
         await navigator.clipboard.writeText(formData.password);
         alert('Password copied to clipboard!');
