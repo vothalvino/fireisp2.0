@@ -148,10 +148,15 @@ function Services() {
     }
   };
 
-  const handleCopyPassword = () => {
+  const handleCopyPassword = async () => {
     if (formData.password) {
-      navigator.clipboard.writeText(formData.password);
-      alert('Password copied to clipboard!');
+      try {
+        await navigator.clipboard.writeText(formData.password);
+        alert('Password copied to clipboard!');
+      } catch (error) {
+        console.error('Failed to copy password:', error);
+        alert('Failed to copy password. Please copy manually.');
+      }
     }
   };
 
